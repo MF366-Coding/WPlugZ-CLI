@@ -18,7 +18,7 @@ Need help getting started with making your very own WriterClassic plugin? Then, 
 Here is a list of the flags for every command.
 
 | Command Group | Short Form Flag | Long Form Flag | Optional? |
-------------------------------------------------------------
+--------|------|-----------|----|
 | `new` | `-t` | `--title` | No |
 | `new` | `-a` | `--author` | Yes |
 | `new` | `-d` | `--description` | Yes |
