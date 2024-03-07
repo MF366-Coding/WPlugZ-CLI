@@ -3,6 +3,9 @@
 
 Need help getting started with making your very own WriterClassic plugin? Then, use **WPluZ**, a powerful **CLI** for helping you manage your own plugins.
 
+## Manifests
+**WPlugZ** itself currently doesn't support manifests but the **WPlugZ Manifest Verify CLI** is working.
+
 ## Features
 - Creating a new plugin (`new`)
 - Bumping and managing versions (`bump`)
