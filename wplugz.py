@@ -1,7 +1,8 @@
-from typing import SupportsFloat
+from typing import Any
 from colorama import Fore
 from getpass import getuser
-import os, sys, shutil, simple_webbrowser
+import os, sys, shutil, simple_webbrowser, json
+import wplugz_verify as manifest_verify
 from argparse import ArgumentParser, Namespace
 
 NEED_INT_REPLACE: int = -1
@@ -18,7 +19,7 @@ TITLE = """██╗    ██╗██████╗ ██╗     ██╗  
                               
 """
 
-TITLE_MSG = "WriterClassic  Copyright (C) 2024  MF366"
+TITLE_MSG = "WPlugZ CLI  Copyright (C) 2024  MF366"
 
 def bool_swap(v: bool) -> bool:
     return not v
@@ -33,28 +34,30 @@ def title_ascii(_ascii: str, _msg: str):
         print(COLORMAP[cur_map_index], end="")
         print(ascii_line)
         
-        cur_map_index = int(bool_swap(cur_map_index))
+        cur_map_index = int(not cur_map_index)
         
     print(f'{COLORMAP[cur_map_index]}{_msg}{Fore.RESET}\n')
 
 title_ascii(TITLE, TITLE_MSG)
 
+
 class ClampingError(Exception): ...
 
-def clamp(n: SupportsFloat, _min: SupportsFloat = 0, _max: SupportsFloat = 1000) -> SupportsFloat:
+
+def clamp(n: int, _min: int = 0, _max: int = 1000) -> int:
     """
     clamp clamps n between _min and _max
 
     Args:
-        n (SupportsFloat): val
-        _min (SupportsFloat, optional): min val. Defaults to 0.
-        _max (SupportsFloat, optional): max val. Defaults to 1000.
+        n (int): val
+        _min (int, optional): min val. Defaults to 0.
+        _max (int, optional): max val. Defaults to 1000.
 
     Raises:
         ClampingError: if _min is greater than _max
 
     Returns:
-        SupportsFloat: clamped val
+        int: clamped val
     """
     
     if _min > _max:
@@ -68,14 +71,15 @@ def clamp(n: SupportsFloat, _min: SupportsFloat = 0, _max: SupportsFloat = 1000)
 
     return n
 
-def is_between(n: SupportsFloat, _min: SupportsFloat = 0, _max: SupportsFloat = 1000) -> bool:
+
+def is_between(n: int | float, _min: int | float = 0, _max: int | float = 1000) -> bool:
     """
     is_between checks if a number is between or equal to _min and _max
 
     Args:
-        n (SupportsFloat): value to check
-        _min (SupportsFloat, optional): min value. Defaults to 0.
-        _max (SupportsFloat, optional): max value. Defaults to 1000.
+        n (int | float): value to check
+        _min (int | float, optional): min value. Defaults to 0.
+        _max (int | float, optional): max value. Defaults to 1000.
 
     Returns:
         bool: whether the condition meets or not
@@ -86,8 +90,10 @@ def is_between(n: SupportsFloat, _min: SupportsFloat = 0, _max: SupportsFloat = 
 
     return False
 
+
 parser = ArgumentParser("WPlugZ", None, "A powerful CLI for helping you develop your own WriterClassic plugins.")
 subparsers = parser.add_subparsers(dest="command")
+
 
 def action_bump(params: Namespace):
     pkg_path = os.path.abspath(os.getcwd())
@@ -95,8 +101,10 @@ def action_bump(params: Namespace):
 
     print(f"{Fore.CYAN}Got package located at: {Fore.YELLOW}{pkg_path}{Fore.RESET}")
 
-    with open(os.path.join(pkg_path, 'Versions.txt'), "r", encoding="utf-8") as f:
-        v = clamp(int(f.read()), 1, 1000)
+    with open(os.path.join(pkg_path, 'manifest.json'), "r", encoding="utf-8") as f:
+        j = json.load(f)
+        __versions = [int(i[1:]) for i in j]
+        v = max(__versions)
         f.close()
 
     if not is_between(params.version, 1, 1000):
@@ -116,12 +124,15 @@ def action_bump(params: Namespace):
 
         print(f"{Fore.CYAN}Added the changes to the VERSIONING.md: {Fore.YELLOW}{params.changes}{Fore.RESET}")
 
-    if v < params.version:
-        with open(os.path.join(pkg_path, 'Versions.txt'), "w", encoding="utf-8") as f:
-            f.write(str(params.version))
-            f.close()
+    with open(os.path.join(pkg_path, 'manifest.json'), "r", encoding="utf-8") as f:
+        j: dict = json.load(f)
+    
+    with open(os.path.join(pkg_path, 'manifest.json'), "w", encoding="utf-8") as f:
+        j[f"v{params.version}"] = j[f"v{v}"].copy()
+        json.dump(j, f, indent=4)
 
-        print(f"{Fore.CYAN}Wrote to Versions.txt: {Fore.YELLOW}Old: {v} | New: {params.version}{Fore.RESET}")
+    print(f"{Fore.CYAN}Wrote to the manifest: {Fore.YELLOW}Old: {v} | New: {params.version}{Fore.RESET}")
+
 
 def action_del(params: Namespace) -> bool:
     """
@@ -129,27 +140,60 @@ def action_del(params: Namespace) -> bool:
         bool: whether the operation was sucessful or not
     """
     
+    files_l = []
+    dirs_l = []
+
+    for root, dirs, files in os.walk(os.path.abspath(os.getcwd()), topdown=False):
+        for file in files:
+            file_path = os.path.join(root, file)
+            files_l.append(file_path)
+            
+        for _dir in dirs:
+            dir_path = os.path.join(root, _dir)
+            dirs_l.append(dir_path)
+        
+    dirs_s = ''
+    files_s = ''
+    x = 1
+       
+    for dir_path in dirs_l:
+        dirs_s += f'\n\t{x}) {dir_path}'
+        x += 1
+        
+    x = 1 # [*] reset x for the second loop
+    
+    for filepath in files_l:
+        files_s += f'\n\t{x}) {filepath}'
+        x += 1
+            
     if not params.skip:
-        print(f"{Fore.RED}Are you sure you want to remove this plugin permanently from your device?{Fore.RESET} [y/N]", end=" ")
+        print(f"""{Fore.RED}[!] This action cannot be undone so make sure you really want to run it!{Fore.RESET}
+Here is an exhaustive list of what will be removed if you continue with this action...
+\n{Fore.MAGENTA}Directories that will be removed{Fore.RESET}
+{dirs_s}
+\n{Fore.YELLOW}Files that will be removed{Fore.RESET}
+{files_s}
+
+{Fore.RED}Are you sure you want to remove this plugin permanently from your device?{Fore.RESET} [y/N]""", end=' ')
+        
         k = input().lower().strip()
 
-        if k == '':
+        if not k:
             k = 'n'
 
         if k[0] != 'y':
             print(f"\n{Fore.GREEN}Nothing was removed.{Fore.RESET}")
             return False
+    
+    for file in files_l:
+        os.remove(file)
+    
+    for directory in dirs_l:
+        os.rmdir(directory)
 
-    for root, dirs, files in os.walk(os.path.abspath(os.getcwd()), topdown=False):
-        for file in files:
-            file_path = os.path.join(root, file)
-            os.remove(file_path)
-        for _dir in dirs:
-            dir_path = os.path.join(root, _dir)
-            os.rmdir(dir_path)
-
-    print(f"{Fore.RED}The plugin has been removed permanently.{Fore.RESET}")
+    print(f"\n{Fore.RED}The files and directories have been removed permanently.{Fore.RESET}")
     return True
+
 
 def file_extension(s: str, return_as_lower: bool = True) -> str:
     """
@@ -198,13 +242,15 @@ def action_test(params: Namespace) -> bool:
         return False
 
     if not is_between(params.version, 1, 1000):
-        with open(os.path.join(pkg_path, 'Versions.txt'), "r", encoding="utf-8") as f:
-            params.version = clamp(int(f.read()), 1, 1000)
+        with open(os.path.join(pkg_path, 'manifest.json'), "r", encoding="utf-8") as f:
+            j = json.load(f)
+            __versions = [int(i[1:]) for i in j]
+            params.version = max(__versions)
             f.close()
-
+            
     print(f"{Fore.CYAN}Got the test version: {Fore.YELLOW}{params.version}{Fore.RESET}")
 
-    writerclassic_path: tuple[str] = (params.path, file_extension(params.path))
+    writerclassic_path: tuple[Any, str] = (params.path, file_extension(params.path))
     writerclassic_dir = os.path.dirname(writerclassic_path[0])
     plugins_dir = os.path.join(writerclassic_dir, 'plugins')
 
@@ -224,18 +270,18 @@ def action_test(params: Namespace) -> bool:
     
     print(f"{Fore.CYAN}Ready to launch WriterClassic, plugin setup: {Fore.YELLOW}{a}{Fore.RESET}")
     
-    pycmd = f'python3 {writerclassic_path[0]}'
+    pycmd = f'"{sys.executable}" {writerclassic_path[0]}'
     
     if sys.platform == 'win32':
         if writerclassic_path[1] == 'py':
-            pycmd = f'python {writerclassic_path[0]}'
+            pycmd = f'"{sys.executable}" {writerclassic_path[0]}'
         
         else:
             pycmd = writerclassic_path[0]
     
     print(f"{Fore.MAGENTA}Launching WriterClassic. Once it has launched, run plugin number {Fore.RED}{d.split('_')[1]}{Fore.MAGENTA}.{Fore.RESET}\nYou can choose to remove it or not.{Fore.RESET}")
     
-    if pycmd.startswith('python'):
+    if pycmd.lower().endswith('py'):
         print(f"\n{Fore.LIGHTGREEN_EX}Output:{Fore.RESET}")
     
     os.system(pycmd)
@@ -251,9 +297,13 @@ def action_new(params: Namespace):
 
     print(f"{Fore.CYAN}Created the version dir at: {Fore.YELLOW}{version_path}{Fore.RESET}")
 
-    metadata = f"""{params.title}
-{params.author}
-{params.description}"""
+    metadata = {
+        f"v{int(clamp(params.version, 1, 1000))}": {
+            "name": params.title,
+            "author": params.author,
+            "description": params.description
+        }
+    }
 
     initial_code = """from typing import Any
 
@@ -273,30 +323,32 @@ Made with <3 by {params.author}
 
     print(f"{Fore.CYAN}Generated metadata, placeholder code and initial README contents.{Fore.RESET}")
 
-    with open(os.path.join(version_path, 'Details.txt'), 'w', encoding='utf-8') as f:
-        f.write(metadata)
-        f.close()
-
-    print(f"{Fore.CYAN}Wrote the metadata.{Fore.RESET}")
-
     if not os.path.exists(params.icon):
         params.icon = os.path.join(os.path.dirname(__file__), 'files', 'WriterPlugin.png')
 
     a = shutil.copy2(os.path.abspath(params.icon), os.path.join(version_path, 'WriterPlugin.png'))
+
+    metadata[f"v{int(clamp(params.version, 1, 1000))}"]['imagefile'] = a
 
     print(f"{Fore.CYAN}Applied the icon: {Fore.YELLOW}{a}{Fore.RESET}")
 
     with open(os.path.join(version_path, f'{params.title}.py'), 'w', encoding='utf-8') as f:
         f.write(initial_code)
         f.close()
+        
+    with open(os.path.join(version_path, 'Details.txt'), 'w', encoding='utf-8') as f:
+        f.write(f"{params.title}\n{params.author}\n{params.description}")
+        f.close()
+        
+    metadata[f"v{int(clamp(params.version, 1, 1000))}"]['pyfile'] = os.path.join(version_path, f'{params.title}.py')
 
     print(f"{Fore.CYAN}Created the Python file with placeholder code.{Fore.RESET}")
 
-    with open(os.path.join(pkg_path, 'Versions.txt'), 'w', encoding='utf-8') as f:
-        f.write(str(clamp(params.version, 1, 1000)))
+    with open(os.path.join(pkg_path, 'manifest.json'), 'w', encoding='utf-8') as f:
+        json.dump(metadata, f, indent=4)
         f.close()
 
-    print(f"{Fore.CYAN}Wrote the version data.{Fore.RESET}")
+    print(f"{Fore.CYAN}Wrote the metadata.{Fore.RESET}")
 
     if params.readme:
         with open(os.path.join(pkg_path, 'README.md'), 'w', encoding='utf-8') as f:
@@ -334,7 +386,7 @@ make_group.add_argument("--readme", action='store_true', help="This argument ind
 test_group = subparsers.add_parser('test', help='Is your plugin working? Test its behavior with WriterClassic.')
 
 test_group.add_argument("-p", "--path", type=str, help="The path to WriterClassic. If you use the Python version, you'll be able to see the console output. This argument is required.", required=True)
-test_group.add_argument("-v", '--version', type=int, help="The version to test. Defaults to the one in the Versions.txt file.", default=NEED_INT_REPLACE)
+test_group.add_argument("-v", '--version', type=int, help="The version to test. Defaults to the latest one.", default=NEED_INT_REPLACE)
 
 delete_group = subparsers.add_parser('remove', help='Remove your plugin safely and quickly.')
 
@@ -343,7 +395,12 @@ delete_group.add_argument("--skip", action='store_true', help="Skip confirmation
 bump_group = subparsers.add_parser('bump', help='Bump your plugin to the next version.')
 
 bump_group.add_argument("-c", '--changes', type=str, help="The description of the changes that will be made.", default=DEFAULT_MESSAGE)
-bump_group.add_argument('-v', '--version', type=int, help="The version to bump to. Defaults to the next after Versions.txt.", default=NEED_INT_REPLACE)
+bump_group.add_argument('-v', '--version', type=int, help="The version to bump to. Defaults to the next after the latest.", default=NEED_INT_REPLACE)
+
+verify_group = subparsers.add_parser('verify', help='Verify if your manifest JSON file is good with WPlugZ Manifest Verify.')
+
+verify_group.add_argument("-f", '--file', type=str, help="The path to the manifest file.", required=True)
+verify_group.add_argument('--ignore-hints', action='store_true', help="Ignore problems tagged as hints.", default=False)
 
 parser.add_argument("--info", "-w", action='store_true', help="Need a hand?", default=False)
 
@@ -365,6 +422,9 @@ match data.command:
 
     case 'test':
         action_test(data)
+        
+    case 'verify':
+        manifest_verify.main(data.file, data.ignore_hints)
 
 print(f"\n\n{Fore.YELLOW}Hit ENTER to leave...{Fore.RESET}")
 input()
