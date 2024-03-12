@@ -11,6 +11,7 @@ Need help getting started with making your very own WriterClassic plugin? Then, 
 - Bumping and managing versions (`bump`)
 - Removing a plugin (`remove`)
 - Testing a plugin using WriterClassic (`test`)
+- **NEW!** Verify if a MANIFEST file is structured correctly (`verify` or use the **WPlugZ Manifest Verify** script)
 
 ## Anti-Features
 - Creating a ZIP package
@@ -37,6 +38,8 @@ Here is a list of the flags for every command.
 | `remove` | None | `--skip` | Yes |
 | `bump` | `-c` | `--changes` | Yes |
 | `bump` | `-v` | `--version` | Yes |
+| `verify` | `-f` | `--file` | No |
+| `verify` | None | `--ignore-hints` | Yes |
 | None | `-h` | `--help` | Yes |
 | None | `-w` | `--info` | Yes |
 
@@ -45,3 +48,4 @@ Here is a list of the flags for every command.
 - Bump to previous versions
 - Rebump versions
 - Use `remove` on dirs that don't have plugins (it actually erases non-plugin files so **be careful!!!!**)
+- Verify files that are not WriterClassic Plugin MANIFESTs (it doesn't do anything to the file but it's gonna show a lot of errors probably)
