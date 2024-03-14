@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from colorama import Fore, Style
-import json
+import json, re
 
 TITLE = """                    ██╗    ██╗██████╗ ██╗     ██╗   ██╗ ██████╗ ███████╗               ██████╗██╗     ██╗
                     ██║    ██║██╔══██╗██║     ██║   ██║██╔════╝ ╚══███╔╝              ██╔════╝██║     ██║
@@ -149,6 +149,7 @@ MGeneralHint = ManifestHint(0, 'GeneralHint')
 MPlaceholderReminder = ManifestHint(1, 'PlaceholderTextReminder', False)
 MWrongCall = ManifestHint(2, 'UsedExcludeInsteadOfUncompatible')
 MNotNeeded = ManifestHint(3, 'UnnecessaryParameter')
+MUsingZipfile = ManifestHint(4, 'UsingZipfileParameter')
 
 
 def main(manifest: str, ignore_hints: bool = False):
@@ -182,7 +183,10 @@ def main(manifest: str, ignore_hints: bool = False):
             continue
 
         else:
-            if 'zipfile' not in version and 'pyfile' not in version:
+            if 'zipfile' in version:
+                MUsingZipfile.print_error("The use of 'zipfile' is disencouraged")
+            
+            elif 'zipfile' not in version and 'pyfile' not in version:
                 MMissingParameter.print_error("One of 'pyfile'/'zipfile' must be defined")
 
         for k, v in version.items():
@@ -193,11 +197,18 @@ def main(manifest: str, ignore_hints: bool = False):
 
                     else:
                         if not v:
-                            MRedundantParameter.print_error("uncompatible was specified but is empty")
-
-                        for i in ('v9.0.0', 'v10.0.0', 'v10.1.0', 'v10.1.1', 'v10.1.2', 'v10.2.0', 'v10.3.0', 'v10.4.0', 'v10.5.0', 'v10.6.0'):
-                            if i in v:
-                                MRedundantUseOfUncompatible.print_error(f"'{i}' is uncompatible with manifests by default")
+                            MRedundantParameter.print_error("'uncompatible' was specified but is empty")
+                        
+                        else:
+                            for i in v:
+                                i = str(i)
+                                
+                                if not i.startswith('v'):
+                                    MRedundantUseOfUncompatible.print_error(f"Every WriterClassic version starts with lowercase v but '{i}' doesn't and was specified which means it's uncompatible by default")
+                                
+                                else:                                   
+                                    if re.search(r'(3|4|5|6|7|8|9|10).[0-6]..', i) is not None:
+                                        MRedundantUseOfUncompatible.print_error(f"'{i}' is uncompatible with manifests by default")
 
                 case 'name':
                     if type(v) != str:

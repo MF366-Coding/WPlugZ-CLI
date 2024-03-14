@@ -49,3 +49,52 @@ Here is a list of the flags for every command.
 - Rebump versions
 - Use `remove` on dirs that don't have plugins (it actually erases non-plugin files so **be careful!!!!**)
 - Verify files that are not WriterClassic Plugin MANIFESTs (it doesn't do anything to the file but it's gonna show a lot of errors probably)
+
+## About WPlugZ Manifest Verify's errors and warnings
+### E1: TypeError
+A certain type (e.g.: string) was expected for a parameter but another type (e.g.: bool) was given instead.
+
+### E2: InvalidVersionTag
+The version tag doesn’t match at least one of the following criteria:
+•    Starts with lowercase ‘v’
+•    Has at least 2 characters and less than 5, in total
+•    There are only digits after the first character
+
+### E3: ForbiddenName
+A forbidden character such as “*” or “?” was used in the name parameter.
+
+### E4: EmptyVersionObject
+The version doesn’t have any parameters at all.
+
+### E5: MandatoryParameterMissing
+One of “pyfile”/”zipfile” must be defined but neither are.
+
+### W1: UncompatibleByDefault
+Used a WriterClassic version in the “uncompatible” parameter that is uncompatible by default.
+
+### W2: RedundantUseOfParameter
+Other parameters that are not “uncompatible” are being used alongside “zipfile”, which takes priority.
+
+### W3: LongStringAsParameter
+The description or the name are too long (each one has its own character limitation).
+
+### W4: NameShouldBeManifest
+The filename is not “manifest.json”.
+
+### R1: PlaceholderTextReminder
+A reminder you’re using placeholder text (which could be ‘###’, ‘…’ or ‘.’).
+
+### H2: UsedExcludeInsteadOfUncompatible
+**This is an hint, it can be ignored by doing “—ignore-hints”.**
+
+An “exclude” parameter exists but the MANIFEST’s creator probably meant “uncompatible”.
+
+### H3: UnnecessaryParameter
+**This is an hint, it can be ignored by doing “—ignore-hints”.**
+
+A parameter that isn’t used by WriterClassic and is not “exclude” either was given and can be safely removed.
+
+### H4: UsingZipfileParameter
+**This is an hint, it can be ignored by doing “—ignore-hints”.**
+
+'zipfile' was used despite its use being disencouraged.
