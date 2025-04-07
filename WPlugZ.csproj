@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- net 6, 7 and 8 -->
+	<PropertyGroup>
+		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+
+		<OutputType>Exe</OutputType>  <!-- Executable, not a library -->
+		<RootNamespace>WPlugZ_CLI</RootNamespace>
+
+		<PublishSingleFile>true</PublishSingleFile>
+		<PublishTrimmed>false</PublishTrimmed>
+	</PropertyGroup>
+
+	<!-- Windows x64 Runtime Configuration -->
+	<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+		<PublishSingleFile>true</PublishSingleFile>  <!-- Package everything into a single executable -->
+		<PlatformTarget>x64</PlatformTarget>
+	</PropertyGroup>
+
+	<!-- Linux x64 Runtime Configuration -->
+	<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
+		<PublishSingleFile>true</PublishSingleFile> <!-- Turn to false if necessary later -->
+		<PlatformTarget>x64</PlatformTarget>
+	</PropertyGroup>
+
+	<!-- For an actual release -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
+		<OutputPath>bin\Release\</OutputPath>
+		<DefineConstants>RELEASE</DefineConstants>
+		<DebugType>none</DebugType>  <!-- No debug symbols in Release mode -->
+		<Optimize>true</Optimize>  <!-- Optimize in Release mode -->
+	</PropertyGroup>
+
+	<!-- For debugging (no optimization, full debugging) -->
+	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+		<OutputPath>bin\Debug\</OutputPath>
+		<DefineConstants>DEBUG</DefineConstants>
+		<DebugType>full</DebugType>
+		<Optimize>false</Optimize>
+	</PropertyGroup>
+
+	<!-- Every single C# file matters LOL -->
+	<ItemGroup>
+		<Compile Include="*.cs"/>
+		<PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+	</ItemGroup>
+
+	<!-- Runtime-Specific File Inclusions -->
+	<!-- To add if necessary later
+	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+		<None Include="Assets\Windows\*.*" />
+	</ItemGroup>
+	-->
+
+</Project>

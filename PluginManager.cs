@@ -1,0 +1,1 @@
+namespace WPlugZ_CLI;
