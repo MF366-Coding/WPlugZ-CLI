@@ -10,7 +10,20 @@
 
 		<PublishSingleFile>true</PublishSingleFile>
 		<PublishTrimmed>false</PublishTrimmed>
+		<WarningsAsErrors>CS1998</WarningsAsErrors> <!-- async function lacks await instruction -->
+		<NoWarn>CS0121</NoWarn> <!-- async function lacks await instruction -->
+
+		<OptimizeExecutable Condition="'$(OptimizeExecutable)' == ''">true</OptimizeExecutable>
+		<BuildDocsLevel Condition="'$(BuildDocsLevel)' == ''">0</BuildDocsLevel>
 	</PropertyGroup>
+
+	<!-- Documentation -->
+	<Target Name="GenDocs" Condition="$(BuildDocsLevel) > 0" BeforeTargets="Build">
+		<Exec Command="pandoc Docs/Manifest.org -o Docs/Manifest.html" />
+		<PropertyGroup>
+			<GenerateDocumentationFile Condition="$(BuildDocsLevel) > 1">true</GenerateDocumentationFile>
+		</PropertyGroup>
+	</Target>
 
 	<!-- Windows x64 Runtime Configuration -->
 	<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
@@ -29,7 +42,7 @@
 		<OutputPath>bin\Release\</OutputPath>
 		<DefineConstants>RELEASE</DefineConstants>
 		<DebugType>none</DebugType>  <!-- No debug symbols in Release mode -->
-		<Optimize>true</Optimize>  <!-- Optimize in Release mode -->
+		<Optimize>$(OptimizeExecutable)</Optimize>  <!-- Optimize in Release mode -->
 	</PropertyGroup>
 
 	<!-- For debugging (no optimization, full debugging) -->
@@ -42,15 +55,24 @@
 
 	<!-- Every single C# file matters LOL -->
 	<ItemGroup>
-		<Compile Include="*.cs"/>
+		<Compile Include="**\*.cs" />
+		<None Include="Assets\*" Pack="true" CopyToOutputDirectory="PreserveNewest" />
 		<PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
 	</ItemGroup>
 
-	<!-- Runtime-Specific File Inclusions -->
-	<!-- To add if necessary later
-	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
-		<None Include="Assets\Windows\*.*" />
+	<!-- Documentation if built only -->
+	<ItemGroup Condition="$(BuildDocsLevel) > 0 and Exists('Docs/Manifest.html')">
+		<None Include="Docs/Manifest.html" Pack="true" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
-	-->
+
+	<!-- Windows only -->
+	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+		<Compile Remove="Source/Linux.cs" />
+	</ItemGroup>
+
+	<!-- Linux only -->
+	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
+		<Compile Remove="Source/Windows.cs" />
+	</ItemGroup>
 
 </Project>

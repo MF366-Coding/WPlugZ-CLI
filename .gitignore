@@ -4,3 +4,4 @@ test.json
 *.docx
 obj
 bin
+*.sln
