@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.CommandLine;
 using WPlugZ_CLI.Source;
+using WPlugZ_CLI.Plugin;
 
 
 namespace WPlugZ_CLI
@@ -38,10 +39,10 @@ namespace WPlugZ_CLI
             try
             {
 
-                CLIENT.DefaultRequestHeaders.UserAgent.TryParseAdd("request"); // GitHub shit
+                CLIENT.DefaultRequestHeaders.UserAgent.TryParseAdd("request"); // [i] GitHub shit
 
                 var response = await CLIENT.GetAsync(API_URL);
-                response.EnsureSuccessStatusCode(); // Ya better pray to God, for those sweet 200 success codes
+                response.EnsureSuccessStatusCode(); // [<] Ya better pray to God, for those sweet 200 success codes
 
                 using JsonDocument document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
                 latestVersion = document.RootElement.GetProperty("tag_name").GetString();
@@ -106,7 +107,7 @@ namespace WPlugZ_CLI
 
             var rootCommand = new RootCommand("WPlugZ Plugin Manager CLI");
 
-            // The only 2 global options we really have
+            // [i] The only 2 global options we really have
             var disableUpdateCheckOption = new Option<bool> (
 
                 aliases: new[] { "--disable-update-check", "--dchkupd" },
@@ -126,7 +127,7 @@ namespace WPlugZ_CLI
             rootCommand.AddGlobalOption(disableUpdateCheckOption);
             rootCommand.AddGlobalOption(accessPluginDocsOption);
 
-            // Create command ('new')
+            // [*] Create command ('new')
             var createCommand = new Command("new", "Create a new WriterClassic plugin");
             var pluginNameMkArg = new Argument<string>("name", "The name of the plugin to create");
             var pluginAuthorOpt = new Option<string> (
@@ -186,34 +187,64 @@ namespace WPlugZ_CLI
 
             );
             createCommand.AddArgument(pluginNameMkArg);
-            createCommand.SetHandler(
-                (string name) =>
+            createCommand.AddOption(pluginAuthorOpt);
+            createCommand.AddOption(pluginDescriptionOpt);
+            createCommand.AddOption(pluginIconOpt);
+            createCommand.AddOption(workingDirectoryOpt);
+            createCommand.AddOption(pluginVersionOpt);
+            createCommand.AddOption(createAuthorfileOpt);
+            createCommand.AddOption(createVersioningFileOpt);
+            createCommand.AddOption(createReadmeOpt);
+            // TODO: lierally type mismatch below me :((
+            createCommand.SetHandler(void (name, author, desc, icon, wd, version, additionalFiles) =>
                 {
 
-                    // TODO: plugin creation
-                    Environment.Exit(1);
+                    Creator pluginCreator = new Creator(
+                        name,
+                        author,
+                        desc,
+                        icon,
+                        wd,
+                        version,
+                        Convert.ToBoolean(additionalFiles[0]),
+                        Convert.ToBoolean(additionalFiles[1]),
+                        Convert.ToBoolean(additionalFiles[2])
+                    );
+
+                    pluginCreator.ClampVersion();
+                    int retCode = pluginCreator.CreatePluginDirectory();
+
+                    switch (retCode)
+                    {
+
+                        case 1:
+                            Console.WriteLine("The working directory you've specified is invalid.");
+                            Environment.Exit(1);
+                            break;
+
+                        case 2:
+                            Console.WriteLine("Failed to create the directory.");
+                            Environment.Exit(1);
+                            break;
+
+                        default:
+                            // [<] success, I guess!
+                            break;
+                        
+                    }
+
+                    string imgPath = pluginCreator.CopyImageFileToCorrectLocation();
+                    string pyfilePath = pluginCreator.CreatePlaceholderPythonFile();
+                    pluginCreator.CreateDetailsFile();
+                    pluginCreator.CreateManifestFile(imgPath, pyfilePath);
+                    pluginCreator.CreateAdditionalFiles();
 
                 },
-                pluginNameMkArg);
+                pluginNameMkArg, pluginAuthorOpt, pluginDescriptionOpt, pluginIconOpt, workingDirectoryOpt, pluginVersionOpt, $"{createAuthorfileOpt}{createVersioningFileOpt}{createReadmeOpt}");
             createCommand.AddAlias("create");
             rootCommand.AddCommand(createCommand);
 
-            // Delete command ('delete')
-            var deleteCommand = new Command("delete", "Delete an existing WriterClassic plugin project");
-            var pluginNameDelArg = new Argument<string>("name", "The name of the plugin to create");
-            deleteCommand.AddArgument(pluginNameDelArg);
-            deleteCommand.SetHandler(
-                (string name) =>
-                {
-
-                    // TODO: plugin removal
-                    Environment.Exit(2);
-
-                },
-                pluginNameDelArg);
-            deleteCommand.AddAlias("remove");
-            deleteCommand.AddAlias("del");
-            rootCommand.AddCommand(createCommand);
+            // TODO
 
             rootCommand.SetHandler(
                 (bool disableUpdateCheck, bool accessPluginDocs) =>
@@ -238,6 +269,8 @@ namespace WPlugZ_CLI
 
                 },
                 disableUpdateCheckOption, accessPluginDocsOption);
+
+            await rootCommand.InvokeAsync(args);
 
         }
 

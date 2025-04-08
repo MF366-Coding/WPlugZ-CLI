@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
+using WPlugZ_CLI.Source;
 
 
 namespace WPlugZ_CLI.Plugin
@@ -38,7 +40,7 @@ namespace WPlugZ_CLI.Plugin
             this.author = author;
             this.description = description;
             this.iconPath = iconPath;
-            workingDir = workingDirectory; // no ambiguity = no need for 'this'
+            workingDir = workingDirectory; // [i] no ambiguity = no need for 'this'
             this.version = version;
             this.authorfile = authorfile;
             this.versioning = versioning;
@@ -57,11 +59,14 @@ namespace WPlugZ_CLI.Plugin
         {
 
             string[] VALID_ICONTYPES = {".png", ".jpg", ".gif", ".jfif"};
-            return File.Exists(iconPath);// TODO: & (VALID_ICONTYPES. Path.GetExtension(iconPath).Normalize() {});
+            return File.Exists(iconPath) & (VALID_ICONTYPES.Contains(Path.GetExtension(iconPath).Normalize()));
 
         }
 
-        private void ClampVersion()
+        /// <summary>
+        /// Clamps the specified plugin version between 1 and 1000.
+        /// </summary>
+        public void ClampVersion()
         {
 
             if (version < 1)
@@ -74,6 +79,10 @@ namespace WPlugZ_CLI.Plugin
 
         }
 
+        /// <summary>
+        /// Creates the plugin directory and the version subdirectory.
+        /// </summary>
+        /// <returns>Return code (0 = success; 1 = working directory is invalid; 2 = an error occured)</returns>
         public int CreatePluginDirectory()
         {
 
@@ -94,28 +103,118 @@ namespace WPlugZ_CLI.Plugin
 
         }
 
-        public void CopyImageFile()
+        /// <summary>
+        /// Copies the specified icon file to the correct location.
+        /// </summary>
+        /// <returns>The path of the copy</returns>
+        public string CopyImageFileToCorrectLocation()
         {
 
-            // TODO
-            return;
+            if (!IsValidIconFile()) return null;
+
+            string newIconPath = Path.Join(workingDir, name, $"v{version}", "WriterPlugin.png");
+            File.Copy(iconPath, newIconPath);
+            return newIconPath;
 
         }
 
-        public void CreateManifestFile()
+        /// <summary>
+        /// Creates the MANIFEST file for the plugin.
+        /// </summary>
+        /// <param name="pathToIcon">The path to the icon (not the user one, it's the copied one)</param>
+        /// <param name="pathToPythonFile">The path to the Python file created with CreatePlaceholderPythonFile</param>
+        public void CreateManifestFile(string pathToIcon, string pathToPythonFile)
         {
             string jsonAsString = $@"
             {{
                 ""v{version}"": {{
                     ""name"": ""{name}"",
                     ""author"": ""{author}"",
-                    ""description"": ""{description}""
+                    ""description"": ""{description}"",
+                    ""imagefile"": ""{pathToIcon}"",
+                    ""pyfile"": ""{pathToPythonFile}""
                 }}
             }}";
 
-            using JsonDocument document = JsonDocument.Parse(jsonAsString);
-            // TODO
-            
+            JSON manifest = new JSON();
+            manifest.Load(jsonAsString);
+            manifest.Save(Path.Join(workingDir, name, "manifest.json"));
+
+        }
+
+        /// <summary>
+        /// Creates the plugin's Details.txt file
+        /// </summary>
+        public void CreateDetailsFile()
+        {
+
+            File.WriteAllText(Path.Join(workingDir, name, $"v{version}", "Details.txt"), $"{name}\n{author}\n{description}");
+
+        }
+
+        /// <summary>
+        /// Creates a placeholder Python file for the plugin.
+        /// </summary>
+        /// <returns></returns>
+        public string CreatePlaceholderPythonFile()
+        {
+
+            string pythonFilePath = Path.Join(workingDir, name, $"v{version}", $"{name}.py");
+            File.WriteAllText(pythonFilePath, "from typing import Any\n\ndef start(_globals: dict[str, Any]):\n    print('Hello, World!')\n    return _globals\n");
+            return pythonFilePath;
+
+        }
+
+        private void CreateReadme()
+        {
+
+            File.WriteAllText(
+                Path.Join(workingDir, name, "README.md"),
+                $"# {name}\n{description}\n\nMade with <3 by {author}\n"
+            );
+
+        }
+
+        private void CreateAuthorfile()
+        {
+
+            File.WriteAllText(
+                Path.Join(workingDir, name, "AUTHOR.md"),
+                $"Plugin maintained by: {author}\n"
+            );
+
+        }
+
+        private void CreateVersioningFile()
+        {
+
+            File.WriteAllText(
+                Path.Join(workingDir, name, "VERSIONING.md"),
+                $"v{version}: Initial Release\n"
+            );
+
+        }
+
+        /// <summary>
+        /// Creates the additional optional files.
+        /// </summary>
+        public void CreateAdditionalFiles()
+        {
+
+            if (versioning)
+            {
+                CreateVersioningFile();
+            }
+
+            if (readme)
+            {
+                CreateReadme();
+            }
+
+            if (authorfile)
+            {
+                CreateAuthorfile();
+            }
 
         }
 
