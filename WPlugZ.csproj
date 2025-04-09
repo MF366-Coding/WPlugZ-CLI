@@ -20,6 +20,7 @@
 	<!-- Documentation -->
 	<Target Name="GenDocs" Condition="'$(BuildWPlugZDocs)' != 'none'" BeforeTargets="Build">
 		<Exec Command="pandoc Docs/Manifest.org -o Docs/Manifest.html" Condition="'$(BuildWPlugZDocs)' == 'manifest' or '$(BuildWPlugZDocs)' == 'both' or '$(BuildWPlugZDocs)' == 'all' " />
+		<Exec Command="pandoc Docs/HowToUse.org -o Docs/HowToUse.html" Condition="'$(BuildWPlugZDocs)' == 'howToUse' or '$(BuildWPlugZDocs)' == 'both' or '$(BuildWPlugZDocs)' == 'all' " />
 		<PropertyGroup>
 			<GenerateDocumentationFile Condition="'$(BuildWPlugZDocs)' == 'extra' or '$(BuildWPlugZDocs)' == 'all'">true</GenerateDocumentationFile>
 		</PropertyGroup>
@@ -63,6 +64,9 @@
 	<!-- Documentation if built only -->
 	<ItemGroup Condition="'$(BuildWPlugZDocs)' != 'none' and '$(BuildWPlugZDocs)' != 'extra' and Exists('Docs/Manifest.html')">
 		<None Include="Docs/Manifest.html" Pack="true" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(BuildWPlugZDocs)' != 'none' and '$(BuildWPlugZDocs)' != 'extra' and Exists('Docs/HowToUse.html')">
+		<None Include="Docs/HowToUse.html" Pack="true" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
 	<!-- windows only -->
