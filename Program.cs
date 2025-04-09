@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.CommandLine;
 using WPlugZ_CLI.Source;
 using WPlugZ_CLI.Plugin;
+using System.Reflection.Metadata.Ecma335;
 
 
 namespace WPlugZ_CLI
@@ -127,7 +128,9 @@ namespace WPlugZ_CLI
             rootCommand.AddGlobalOption(disableUpdateCheckOption);
             rootCommand.AddGlobalOption(accessPluginDocsOption);
 
-            // [*] Create command ('new')
+            ////////////// [*] //////////////
+            ////// [*]  Create command //////
+            ////////////// [*] //////////////
             var createCommand = new Command("new", "Create a new WriterClassic plugin");
             var pluginNameMkArg = new Argument<string>("name", "The name of the plugin to create");
             var pluginAuthorOpt = new Option<string> (
@@ -165,24 +168,10 @@ namespace WPlugZ_CLI
                 getDefaultValue: () => 1
 
             );
-            var createAuthorfileOpt = new Option<bool> (
+            var doFullCreationOpt = new Option<bool> (
 
-                aliases: new[] { "--authorfile", "-A" },
-                description: "Create an authorfile for the plugin",
-                getDefaultValue: () => false
-
-            );
-            var createVersioningFileOpt = new Option<bool> (
-
-                aliases: new[] { "--versioning", "-V" },
-                description: "Create a versioning for the plugin",
-                getDefaultValue: () => false
-
-            );
-            var createReadmeOpt = new Option<bool> (
-
-                aliases: new[] { "--readme", "-R" },
-                description: "Create a README file for the plugin",
+                aliases: new[] { "--full", "-f" },
+                description: "Create the additonal optional files",
                 getDefaultValue: () => false
 
             );
@@ -192,11 +181,9 @@ namespace WPlugZ_CLI
             createCommand.AddOption(pluginIconOpt);
             createCommand.AddOption(workingDirectoryOpt);
             createCommand.AddOption(pluginVersionOpt);
-            createCommand.AddOption(createAuthorfileOpt);
-            createCommand.AddOption(createVersioningFileOpt);
-            createCommand.AddOption(createReadmeOpt);
-            // TODO: lierally type mismatch below me :((
-            createCommand.SetHandler(void (name, author, desc, icon, wd, version, additionalFiles) =>
+            createCommand.AddOption(doFullCreationOpt);
+
+            createCommand.SetHandler(void (name, author, desc, icon, wd, version, fullCreation) =>
                 {
 
                     Creator pluginCreator = new Creator(
@@ -206,24 +193,27 @@ namespace WPlugZ_CLI
                         icon,
                         wd,
                         version,
-                        Convert.ToBoolean(additionalFiles[0]),
-                        Convert.ToBoolean(additionalFiles[1]),
-                        Convert.ToBoolean(additionalFiles[2])
+                        fullCreation, // [i] Creates an authorfile
+                        fullCreation, // [i] Creates a versioning file
+                        fullCreation // [i] Creates a README file
                     );
 
                     pluginCreator.ClampVersion();
+                    Console.WriteLine($"Got version number {pluginCreator.PluginVersion}");
+
+                    Console.WriteLine("Attempting to create plugin directory...");
                     int retCode = pluginCreator.CreatePluginDirectory();
 
                     switch (retCode)
                     {
 
                         case 1:
-                            Console.WriteLine("The working directory you've specified is invalid.");
+                            Console.WriteLine("The working directory you've specified is invalid.\nAborting...");
                             Environment.Exit(1);
                             break;
 
                         case 2:
-                            Console.WriteLine("Failed to create the directory.");
+                            Console.WriteLine("Failed to create the directory.\nAborting...");
                             Environment.Exit(1);
                             break;
 
@@ -233,19 +223,90 @@ namespace WPlugZ_CLI
                         
                     }
 
+                    Console.WriteLine($"Copying specified icon file to the correct location...");
                     string imgPath = pluginCreator.CopyImageFileToCorrectLocation();
+
+                    Console.Write(imgPath == null ? "The specified icon file's path is invalid." : "Copied image to correct location!");
+                    
+                    if (imgPath == null)
+                    {
+                        Environment.Exit(2);
+                    }
+
+                    Console.Write("\n");
+                    Console.WriteLine("Creating the placeholder Python file...");
                     string pyfilePath = pluginCreator.CreatePlaceholderPythonFile();
+
+                    Console.WriteLine("Creating the Details.txt file...");
                     pluginCreator.CreateDetailsFile();
+
+                    Console.WriteLine("Creating the MANIFEST file...");
                     pluginCreator.CreateManifestFile(imgPath, pyfilePath);
+
+                    Console.WriteLine("Creating the additional files...");
                     pluginCreator.CreateAdditionalFiles();
 
+                    Console.WriteLine("Done!");
+
                 },
-                pluginNameMkArg, pluginAuthorOpt, pluginDescriptionOpt, pluginIconOpt, workingDirectoryOpt, pluginVersionOpt, $"{createAuthorfileOpt}{createVersioningFileOpt}{createReadmeOpt}");
+                pluginNameMkArg, pluginAuthorOpt, pluginDescriptionOpt, pluginIconOpt, workingDirectoryOpt, pluginVersionOpt, doFullCreationOpt);
             createCommand.AddAlias("create");
             rootCommand.AddCommand(createCommand);
 
-            // TODO
+            ////////////// [*] //////////////
+            ////// [*]  Delete command //////
+            ////////////// [*] //////////////
+            var delCommand = new Command("delete", "Delete an existing WPlugZ project");
+            var pluginNameDelArg = new Argument<string>("name", "The name of the plugin to remove");
+            var skipConfirmationOpt = new Option<bool> (
 
+                aliases: new[] { "--skip", "-S" },
+                description: "Skip confirmation for file removal",
+                getDefaultValue: () => false
+
+            );
+            delCommand.AddArgument(pluginNameDelArg);
+            delCommand.AddOption(skipConfirmationOpt);
+
+            delCommand.SetHandler(void (name, skip) =>
+                {
+
+                    Deleter pluginDeleter = new Deleter(
+                        name,
+                        skip
+                    );
+
+                    // TODO: implement deleter logic
+
+                },
+                pluginNameDelArg, skipConfirmationOpt);
+            delCommand.AddAlias("remove");
+            delCommand.AddAlias("rm");
+            delCommand.AddAlias("del");
+            rootCommand.AddCommand(delCommand);
+
+            ////////////// [*] //////////////
+            /////// [*]  Bump command ///////
+            ////////////// [*] //////////////
+            var bumpCommand = new Command("bump", "Bump a WriterClassic plugin");
+            // TODO: implement BUMP logic
+
+            ////////////// [*] //////////////
+            /////// [*]  Test command ///////
+            ////////////// [*] //////////////
+            var testCommand = new Command("test", "Test a version of a WriterClassic plugin with WriterClassic");
+            // TODO: implement TEST logic
+
+            ////////////// [*] //////////////
+            /// [*] Manifest verification ///
+            ////////////// [*] //////////////
+            var verifyCommand = new Command("verify", "Run a MANIFEST verification on a WriterClassic plugin");
+            // TODO: implement Manifest verification logic
+            verifyCommand.AddAlias("manifest");
+
+            ////////////// [*] //////////////
+            /////// [*]  Root Command ///////
+            ////////////// [*] //////////////
             rootCommand.SetHandler(
                 (bool disableUpdateCheck, bool accessPluginDocs) =>
                 {

@@ -16,7 +16,7 @@ namespace WPlugZ_CLI.Plugin
         public string description;
         public string iconPath;
         public string workingDir;
-        public int version;
+        protected int version;
         public bool authorfile;
         public bool versioning;
         public bool readme;
@@ -215,6 +215,16 @@ namespace WPlugZ_CLI.Plugin
             {
                 CreateAuthorfile();
             }
+
+        }
+
+        /// <summary>
+        /// Retrieves the plugin's version.
+        /// </summary>
+        public int PluginVersion
+        {
+
+            get { return version; }
 
         }
 

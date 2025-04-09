@@ -14,14 +14,14 @@
 		<NoWarn>CS0121</NoWarn> <!-- async function lacks await instruction -->
 
 		<OptimizeExecutable Condition="'$(OptimizeExecutable)' == ''">true</OptimizeExecutable>
-		<BuildDocsLevel Condition="'$(BuildDocsLevel)' == ''">0</BuildDocsLevel>
+		<BuildWPlugZDocs Condition="'$(BuildWPlugZDocs)' == ''">none</BuildWPlugZDocs>
 	</PropertyGroup>
 
 	<!-- Documentation -->
-	<Target Name="GenDocs" Condition="$(BuildDocsLevel) > 0" BeforeTargets="Build">
-		<Exec Command="pandoc Docs/Manifest.org -o Docs/Manifest.html" />
+	<Target Name="GenDocs" Condition="'$(BuildWPlugZDocs)' != 'none'" BeforeTargets="Build">
+		<Exec Command="pandoc Docs/Manifest.org -o Docs/Manifest.html" Condition="'$(BuildWPlugZDocs)' == 'manifest' or '$(BuildWPlugZDocs)' == 'both' or '$(BuildWPlugZDocs)' == 'all' " />
 		<PropertyGroup>
-			<GenerateDocumentationFile Condition="$(BuildDocsLevel) > 1">true</GenerateDocumentationFile>
+			<GenerateDocumentationFile Condition="'$(BuildWPlugZDocs)' == 'extra' or '$(BuildWPlugZDocs)' == 'all'">true</GenerateDocumentationFile>
 		</PropertyGroup>
 	</Target>
 
@@ -61,7 +61,7 @@
 	</ItemGroup>
 
 	<!-- Documentation if built only -->
-	<ItemGroup Condition="$(BuildDocsLevel) > 0 and Exists('Docs/Manifest.html')">
+	<ItemGroup Condition="'$(BuildWPlugZDocs)' != 'none' and '$(BuildWPlugZDocs)' != 'extra' and Exists('Docs/Manifest.html')">
 		<None Include="Docs/Manifest.html" Pack="true" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
