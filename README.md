@@ -1,4 +1,7 @@
 # WPlugZ
+### > Now written in C# (v3.1.0 coming soon).
+Not just a rewrite. This version does actually include nee features.
+
 > The only CLI you'll ever need for developing WriterClassic plugins.
 
 [![Latest Version](https://img.shields.io/github/v/tag/MF366-Coding/WPlugZ-CLI?color=brown)](https://github.com/MF366-Coding/WPlugZ-CLI/releases/latest)
@@ -7,7 +10,7 @@
 ![GitHub contributors](https://img.shields.io/github/contributors/MF366-Coding/WPlugZ-CLI?color=yellow)
 ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-pr/MF366-Coding/WPlugZ-CLI?style=flat&color=green)
 ![GitHub Repo stars](https://img.shields.io/github/stars/MF366-Coding/WPlugZ-CLI?color=red)
-![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/MF366-Coding/WPlugZ-CLI?style=flat&color=red)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/MF366-Coding/WPlugZ-CLI?style=flat&color=blue)
 
 Need help getting started with making your very own WriterClassic plugin? Then, use **WPluZ**, a powerful **CLI** for helping you manage your own plugins.
 
