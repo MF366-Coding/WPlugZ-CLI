@@ -3,11 +3,11 @@
 
 [![Latest Version](https://img.shields.io/github/v/tag/MF366-Coding/WPlugZ-CLI?color=brown)](https://github.com/MF366-Coding/WPlugZ-CLI/releases/latest)
 [![License](https://img.shields.io/github/license/MF366-Coding/WPlugZ-CLI)](https://raw.githubusercontent.com/MF366-Coding/WPlugZ-CLI/main/LICENSE)
-![GitHub top language](https://img.shields.io/github/languages/top/MF366-Coding/WPlugZ-CLI)
+![GitHub top language](https://img.shields.io/github/languages/top/MF366-Coding/WPlugZ-CLI?color=purple)
 ![GitHub contributors](https://img.shields.io/github/contributors/MF366-Coding/WPlugZ-CLI?color=yellow)
 ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-pr/MF366-Coding/WPlugZ-CLI?style=flat&color=green)
 ![GitHub Repo stars](https://img.shields.io/github/stars/MF366-Coding/WPlugZ-CLI?color=red)
-![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/MF366-Coding/WPlugZ-CLI?style=flat&color=purple)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/MF366-Coding/WPlugZ-CLI?style=flat&color=red)
 
 Need help getting started with making your very own WriterClassic plugin? Then, use **WPluZ**, a powerful **CLI** for helping you manage your own plugins.
 
