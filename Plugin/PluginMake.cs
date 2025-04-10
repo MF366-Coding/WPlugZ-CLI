@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using WPlugZ_CLI.Source;
 
 
@@ -16,13 +15,13 @@ namespace WPlugZ_CLI.Plugin
         public string description;
         public string iconPath;
         public string workingDir;
-        protected int version;
+        int version;
         public bool authorfile;
         public bool versioning;
         public bool readme;
 
         /// <summary>
-        /// Instantiate the class Creator, capable of creating WriterClassic plugins as WPlugZ-CLI porjects.
+        /// Instantiate the class Creator, capable of creating WriterClassic plugins as WPlugZ-CLI projects.
         /// </summary>
         /// <param name="name">The name of the plugin</param>
         /// <param name="author">The name of the plugin's maintainer/creator/owner</param>
@@ -69,13 +68,7 @@ namespace WPlugZ_CLI.Plugin
         public void ClampVersion()
         {
 
-            if (version < 1)
-            {
-                version = 1;
-                return;
-            }
-
-            version = version > 1001 ? 1000 : version;
+            version = Numbers.ClampInteger(version, 1, 1000);
 
         }
 
@@ -113,7 +106,17 @@ namespace WPlugZ_CLI.Plugin
             if (!IsValidIconFile()) return null;
 
             string newIconPath = Path.Join(workingDir, name, $"v{version}", "WriterPlugin.png");
-            File.Copy(iconPath, newIconPath);
+            
+            try
+            {
+                File.Copy(iconPath, newIconPath);
+            }
+            catch (Exception)
+            {
+                File.Delete(newIconPath);
+                File.Copy(iconPath, newIconPath);
+            }
+
             return newIconPath;
 
         }

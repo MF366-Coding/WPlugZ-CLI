@@ -1,5 +1,9 @@
+# Remainders from old versions
 __pycache__
 .venv
+*.py
+
+# Actual gitignore
 test.json
 *.docx
 obj

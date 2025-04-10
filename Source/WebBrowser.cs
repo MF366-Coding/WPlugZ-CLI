@@ -23,7 +23,7 @@ namespace WPlugZ_CLI.Source
                 {
 
                     FileName = url,
-                    UseShellExecute = true // URL is executed on shell and not as an actual file
+                    UseShellExecute = true
 
                 };
                 Process.Start(psi);

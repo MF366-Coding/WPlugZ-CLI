@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.CommandLine;
 using WPlugZ_CLI.Source;
 using WPlugZ_CLI.Plugin;
-using System.Reflection.Metadata.Ecma335;
 
 
 namespace WPlugZ_CLI
@@ -28,8 +27,11 @@ namespace WPlugZ_CLI
         /// <summary>The GitHub API endpoint where the latest version data is</summary>
         static readonly string API_URL = $"https://api.github.com/repos/{OWNER}/{PROJECT_NAME}/releases/latest";
         
-        static readonly HttpClient CLIENT = new HttpClient();
+        static readonly HttpClient CLIENT = new();
 
+        static Random randomizer = new();
+
+        static bool allowColors = true; 
 
         /// <summary>
         /// Gets WPlugZ's latest version from the GitHub API and saves it into variable latestVersion.
@@ -90,15 +92,29 @@ namespace WPlugZ_CLI
             if (isLatest)
             {
 
-                Console.WriteLine("Your WPlugZ-CLI is up-to-date.");
+                Logger.SuccessLine("Your WPlugZ-CLI is up-to-date.", 2);
             
             }
 
             else
             {
 
-                Console.WriteLine("Your WPlugZ-CLI might be out-of-date or no info could be gathered on versioning.");
+                Logger.WarningLine("Your WPlugZ-CLI might be out-of-date or no info could be gathered on versioning.", 2);
 
+            }
+
+        }
+
+        private static void ConfirmRemoval()
+        {
+
+            var key = Console.ReadKey();
+
+            if (key.KeyChar != 'y')
+            {
+                Logger.ErrorLine("\nOperation cancelled by user input.", 0);
+                Colors.ResetAllEffects();
+                Environment.Exit(0);
             }
 
         }
@@ -108,7 +124,7 @@ namespace WPlugZ_CLI
 
             var rootCommand = new RootCommand("WPlugZ Plugin Manager CLI");
 
-            // [i] The only 2 global options we really have
+            // [i] The only 3 global options we really have
             var disableUpdateCheckOption = new Option<bool> (
 
                 aliases: new[] { "--disable-update-check", "--dchkupd" },
@@ -127,6 +143,7 @@ namespace WPlugZ_CLI
 
             rootCommand.AddGlobalOption(disableUpdateCheckOption);
             rootCommand.AddGlobalOption(accessPluginDocsOption);
+
 
             ////////////// [*] //////////////
             ////// [*]  Create command //////
@@ -151,7 +168,7 @@ namespace WPlugZ_CLI
 
                 aliases: new[] { "--icon", "-i" },
                 description: "The icon of the plugin to create",
-                getDefaultValue: () => Path.Join(AppContext.BaseDirectory, "WriterPlugin.png")
+                getDefaultValue: () => Path.Join(AppContext.BaseDirectory, "Assets", "WriterPlugin.png")
 
             );
             var workingDirectoryOpt = new Option<string> (
@@ -161,7 +178,7 @@ namespace WPlugZ_CLI
                 getDefaultValue: () => Environment.CurrentDirectory
 
             );
-            var pluginVersionOpt = new Option<int> (
+            var pluginVersionMkOpt = new Option<int> (
 
                 aliases: new[] { "--version", "-v" },
                 description: "The starting version of the plugin to create",
@@ -180,7 +197,7 @@ namespace WPlugZ_CLI
             createCommand.AddOption(pluginDescriptionOpt);
             createCommand.AddOption(pluginIconOpt);
             createCommand.AddOption(workingDirectoryOpt);
-            createCommand.AddOption(pluginVersionOpt);
+            createCommand.AddOption(pluginVersionMkOpt);
             createCommand.AddOption(doFullCreationOpt);
 
             createCommand.SetHandler(void (name, author, desc, icon, wd, version, fullCreation) =>
@@ -199,21 +216,23 @@ namespace WPlugZ_CLI
                     );
 
                     pluginCreator.ClampVersion();
-                    Console.WriteLine($"Got version number {pluginCreator.PluginVersion}");
+                    Logger.SuccessLine($"✔ Got version number {pluginCreator.PluginVersion}", 0);
 
-                    Console.WriteLine("Attempting to create plugin directory...");
+                    Logger.InfoLine("➦ Attempting to create plugin directory...", 2);
                     int retCode = pluginCreator.CreatePluginDirectory();
 
                     switch (retCode)
                     {
 
                         case 1:
-                            Console.WriteLine("The working directory you've specified is invalid.\nAborting...");
+                            Logger.ErrorLine("✖ The working directory you've specified is invalid.\nAborting...");
+                            Colors.ResetAllEffects();
                             Environment.Exit(1);
                             break;
 
                         case 2:
-                            Console.WriteLine("Failed to create the directory.\nAborting...");
+                            Logger.ErrorLine("✖ Failed to create the directory.\nAborting...");
+                            Colors.ResetAllEffects();
                             Environment.Exit(1);
                             break;
 
@@ -223,41 +242,49 @@ namespace WPlugZ_CLI
                         
                     }
 
-                    Console.WriteLine($"Copying specified icon file to the correct location...");
+                    Logger.InfoLine($"➦ Copying specified icon file to the correct location...");
                     string imgPath = pluginCreator.CopyImageFileToCorrectLocation();
 
-                    Console.Write(imgPath == null ? "The specified icon file's path is invalid." : "Copied image to correct location!");
-                    
                     if (imgPath == null)
                     {
+                        Logger.ErrorLine("✖ The specified icon file's path is invalid.", 2);
+                        Colors.ResetAllEffects();
                         Environment.Exit(2);
                     }
-
-                    Console.Write("\n");
-                    Console.WriteLine("Creating the placeholder Python file...");
+                    
+                    Logger.SuccessLine("✔ Copied the icon to the correct location!", 2);
+                    Logger.InfoLine("➦ Creating the placeholder Python file...");
                     string pyfilePath = pluginCreator.CreatePlaceholderPythonFile();
 
-                    Console.WriteLine("Creating the Details.txt file...");
+                    Logger.InfoLine("➦ Creating the Details.txt file...");
                     pluginCreator.CreateDetailsFile();
 
-                    Console.WriteLine("Creating the MANIFEST file...");
+                    Logger.InfoLine("➦ Creating the MANIFEST file...");
                     pluginCreator.CreateManifestFile(imgPath, pyfilePath);
 
-                    Console.WriteLine("Creating the additional files...");
+                    Logger.InfoLine("➦ Creating the additional files...", 0);
                     pluginCreator.CreateAdditionalFiles();
 
-                    Console.WriteLine("Done!");
+                    Logger.SuccessLine("✔ Done!", 0);
 
                 },
-                pluginNameMkArg, pluginAuthorOpt, pluginDescriptionOpt, pluginIconOpt, workingDirectoryOpt, pluginVersionOpt, doFullCreationOpt);
+                pluginNameMkArg, pluginAuthorOpt, pluginDescriptionOpt, pluginIconOpt, workingDirectoryOpt, pluginVersionMkOpt, doFullCreationOpt);
             createCommand.AddAlias("create");
             rootCommand.AddCommand(createCommand);
+
 
             ////////////// [*] //////////////
             ////// [*]  Delete command //////
             ////////////// [*] //////////////
             var delCommand = new Command("delete", "Delete an existing WPlugZ project");
             var pluginNameDelArg = new Argument<string>("name", "The name of the plugin to remove");
+            var pluginVersionDelOpt = new Option<int> (
+
+                aliases: new[] { "--version", "-v" },
+                description: "The version of the plugin to remove (defaults to all)",
+                getDefaultValue: () => -1
+
+            );
             var skipConfirmationOpt = new Option<bool> (
 
                 aliases: new[] { "--skip", "-S" },
@@ -266,24 +293,94 @@ namespace WPlugZ_CLI
 
             );
             delCommand.AddArgument(pluginNameDelArg);
+            delCommand.AddOption(pluginVersionDelOpt);
             delCommand.AddOption(skipConfirmationOpt);
 
-            delCommand.SetHandler(void (name, skip) =>
+            delCommand.SetHandler(void (name, version, skip) =>
                 {
 
-                    Deleter pluginDeleter = new Deleter(
-                        name,
-                        skip
-                    );
+                    string newlineChar = "";
+                    
+                    if (version < 1)
+                    {
+                        PluginDeleter pluginDeleter = new PluginDeleter(
+                            name,
+                            Environment.CurrentDirectory
+                        );
 
-                    // TODO: implement deleter logic
+                        if (!skip)
+                        {
+
+                            Logger.Warning($"⚠ Are you sure you wish to remove plugin {name}?\nThis action is irreversable and will wipe EVERYTHING inside the plugin's folder.\nContinue? (y/n) ");
+                            ConfirmRemoval();
+                            newlineChar = "\n";
+
+                        }
+
+                        Logger.InfoLine($"{newlineChar}➦ Initiating removal...", 2);
+                        
+                        int retCode = pluginDeleter.DeleteEverything();
+
+                        if (retCode == 3)
+                        {
+
+                            Logger.ErrorLine("✖ No such plugin present in the current working directory.");
+                            Colors.ResetAllEffects();
+                            Environment.Exit(3); // [i] invalid plugin
+                        
+                        }
+
+                        Logger.SuccessLine("✔ Removal finished!", 0);
+                        Colors.ResetAllEffects();
+                        Environment.Exit(0);
+                    }
+
+                    else
+                    {
+                        VersionDeleter versionDeleter = new VersionDeleter(
+                            name,
+                            version,
+                            Environment.CurrentDirectory
+                        );
+
+                        if (!skip)
+                        {
+
+                            Logger.Warning($"⚠ Are you sure you wish to remove version {version} of plugin {name}?\nThis action is irreversable and will wipe EVERYTHING inside the version's folder.\nContinue? (y/n) ");
+                            ConfirmRemoval();
+                            newlineChar = "\n";
+
+                        }
+
+                        Logger.InfoLine($"{newlineChar}➦ Initiating removal...");
+                        
+                        int retCode = versionDeleter.DeleteEverything();
+
+                        if (retCode == 3)
+                        {
+                            Logger.ErrorLine("✖ No such plugin present in the current working directory.");
+                            Colors.ResetAllEffects();
+                            Environment.Exit(3); // [i] invalid plugin
+                        }
+                        if (retCode == 4)
+                        {
+                            Logger.ErrorLine("✖ Plugin has no such version.", 2);
+                            Colors.ResetAllEffects();
+                            Environment.Exit(3); // [i] invalid version
+                        }
+
+                        Logger.SuccessLine("✔ Removal finished!", 0);
+                        Colors.ResetAllEffects();
+                        Environment.Exit(0);
+                    }
 
                 },
-                pluginNameDelArg, skipConfirmationOpt);
+                pluginNameDelArg, pluginVersionDelOpt, skipConfirmationOpt);
             delCommand.AddAlias("remove");
             delCommand.AddAlias("rm");
             delCommand.AddAlias("del");
             rootCommand.AddCommand(delCommand);
+
 
             ////////////// [*] //////////////
             /////// [*]  Bump command ///////
@@ -291,11 +388,13 @@ namespace WPlugZ_CLI
             var bumpCommand = new Command("bump", "Bump a WriterClassic plugin");
             // TODO: implement BUMP logic
 
+
             ////////////// [*] //////////////
             /////// [*]  Test command ///////
             ////////////// [*] //////////////
             var testCommand = new Command("test", "Test a version of a WriterClassic plugin with WriterClassic");
             // TODO: implement TEST logic
+
 
             ////////////// [*] //////////////
             /// [*] Manifest verification ///
@@ -303,6 +402,7 @@ namespace WPlugZ_CLI
             var verifyCommand = new Command("verify", "Run a MANIFEST verification on a WriterClassic plugin");
             // TODO: implement Manifest verification logic
             verifyCommand.AddAlias("manifest");
+
 
             ////////////// [*] //////////////
             /////// [*]  Root Command ///////
@@ -313,19 +413,14 @@ namespace WPlugZ_CLI
 
                     if (!disableUpdateCheck)
                     {
-
                         CompareVersions();
-
                     }
 
                     if (accessPluginDocs)
                     {
-
                         WebBrowser.OpenURL(PLUGIN_API_URL);
+                        Colors.ResetAllEffects();
                         Environment.Exit(0);
-
-                        
-
                     }
 
                 },

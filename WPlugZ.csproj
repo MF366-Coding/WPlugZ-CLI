@@ -5,6 +5,8 @@
 		<TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
 		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
 
+		<ShowMessagesAsErrors>true</ShowMessagesAsErrors>
+
 		<OutputType>Exe</OutputType>  <!-- Executable, not a library -->
 		<RootNamespace>WPlugZ_CLI</RootNamespace>
 
@@ -19,6 +21,7 @@
 
 	<!-- Documentation -->
 	<Target Name="GenDocs" Condition="'$(BuildWPlugZDocs)' != 'none'" BeforeTargets="Build">
+		<Message Text="Building documentation: $(BuildWPlugZDocs)" />
 		<Exec Command="pandoc Docs/Manifest.org -o Docs/Manifest.html" Condition="'$(BuildWPlugZDocs)' == 'manifest' or '$(BuildWPlugZDocs)' == 'both' or '$(BuildWPlugZDocs)' == 'all' " />
 		<Exec Command="pandoc Docs/HowToUse.org -o Docs/HowToUse.html" Condition="'$(BuildWPlugZDocs)' == 'howToUse' or '$(BuildWPlugZDocs)' == 'both' or '$(BuildWPlugZDocs)' == 'all' " />
 		<PropertyGroup>
@@ -27,7 +30,7 @@
 	</Target>
 
 	<!-- Windows x64 Runtime Configuration -->
-	<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+	<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">		
 		<PublishSingleFile>true</PublishSingleFile>  <!-- Package everything into a single executable -->
 		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
@@ -37,6 +40,13 @@
 		<PublishSingleFile>true</PublishSingleFile> <!-- Turn to false if necessary later -->
 		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
+
+	<!-- Printing important info -->
+	<Target Name="PrintMessage" BeforeTargets="Build">
+		<Message Text="Building with $(TargetFramework) for $(RuntimeIdentifier) in $(Configuration) mode" Importance="High" />
+		<Message Condition="'$(Configuration)' == 'Release'" Text="Optimization enabled: $(OptimizeExecutable)" Importance="High" />
+		<Message Condition="'$(Configuration)' == 'Debug'" Text="THIS IS AN UNOPTIMIZED DEBUG BUILD, please use Release mode for actual releases." Importance="High" />	
+	</Target>
 
 	<!-- For an actual release -->
 	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
