@@ -1,5 +1,5 @@
-# WPlugZ
-### > Now written in C# (v3.1.0 coming soon).
+# WPlugZ-CLI
+> ### Now written in C# (v3.1.0 coming soon).
 Not just a rewrite. This version does actually include nee features.
 
 > The only CLI you'll ever need for developing WriterClassic plugins.
@@ -19,6 +19,14 @@ Need help getting started with making your very own WriterClassic plugin? Then, 
 - [ ] Sync Details, Manifest, etc... with one command
 - [ ] Add default image with one command (useful if accidentally removed)
 - [ ] ...and much more!
+
+-----------------------
+
+```
+Anything below this point is bound to be changed in the near future.
+```
+
+-----------------------
 
 ## Features
 - Creating a new plugin (`new`)
