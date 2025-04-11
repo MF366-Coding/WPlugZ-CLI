@@ -66,9 +66,15 @@
 
 	<!-- Every single C# file matters LOL -->
 	<ItemGroup>
-		<Compile Include="*.cs;Plugin\*.cs;Source\*.cs" />
+		<Compile Include="*.cs;Plugin\*.cs;Source\*.cs;Linux\*.cs" />
 		<None Include="Assets\*" Pack="true" CopyToOutputDirectory="PreserveNewest" />
 		<PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+	</ItemGroup>
+
+	<!-- windows only -->
+	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+		<Compile Remove="Linux\*.cs" />
+		<Compile Include="Windows\*.cs" />
 	</ItemGroup>
 
 	<!-- Documentation if built only -->
@@ -77,16 +83,6 @@
 	</ItemGroup>
 	<ItemGroup Condition="'$(BuildWPlugZDocs)' != 'none' and '$(BuildWPlugZDocs)' != 'extra' and Exists('Docs/HowToUse.html')">
 		<None Include="Docs/HowToUse.html" Pack="true" CopyToOutputDirectory="PreserveNewest" />
-	</ItemGroup>
-
-	<!-- linux only -->
-	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
-		<Compile Include="Linux\*.cs" />
-	</ItemGroup>
-
-	<!-- windows only -->
-	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
-		<Compile Include="Windows\*.cs" />
 	</ItemGroup>
 
 </Project>
