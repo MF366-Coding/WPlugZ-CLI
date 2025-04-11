@@ -23,30 +23,19 @@ namespace WPlugZ_CLI.Source
         /// Deletes a directory, empty or not.
         /// </summary>
         /// <param name="directory">The directory to delete (preferably, an absolute path)</param>
-        /// <returns>Return code (0 = success; -1 = failed to start the removal; anything else = rmdir return code)</returns>
+        /// <returns>Return code (0 = success; -1 = failed to remove)</returns>
         public static int DeleteDirectory(string directory)
         {
 
             try
             {
 
-                ProcessStartInfo psi = new()
-                {
-
-                    FileName = "rmdir",
-                    Arguments = $@"/s /q ""{directory}""",
-                    RedirectStandardOutput = true, // [i] don't output anything if successful
-                    UseShellExecute = true
-
-                };
-                
-                using (Process removal = Process.Start(psi))
-                {
-
-                    removal.WaitForExit();
-                    return removal.ExitCode;
-
-                }
+                // [i] the initial plan was to use rmdir, but unlike with Linux's rm -rf
+                // [i] Windows needs special permisdsions even when deleting a non-root folder
+                // [i] for some fucking reason
+                // [i] so fuck you Microsoft!
+                Directory.Delete(directory, true);
+                return 0;
 
             }
             catch (Exception)

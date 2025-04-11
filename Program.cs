@@ -150,21 +150,21 @@ namespace WPlugZ_CLI
             ////////////// [*] //////////////
             var createCommand = new Command("new", "Create a new WriterClassic plugin");
             var pluginNameMkArg = new Argument<string>("name", "The name of the plugin to create");
-            var pluginAuthorOpt = new Option<string> (
+            var pluginAuthorMkOpt = new Option<string> (
 
                 aliases: new[] { "--author", "-a" },
                 description: "The creator and maintainer of the plugin",
                 getDefaultValue: () => OSEnvironment.GetUsername()
 
             );
-            var pluginDescriptionOpt = new Option<string> (
+            var pluginDescriptionMkOpt = new Option<string> (
 
                 aliases: new[] { "--description", "-d" },
                 description: "The description of the plugin to create",
                 getDefaultValue: () => "WriterClassic Plugin"
 
             );
-            var pluginIconOpt = new Option<string> (
+            var pluginIconMkOpt = new Option<string> (
 
                 aliases: new[] { "--icon", "-i" },
                 description: "The icon of the plugin to create",
@@ -193,9 +193,9 @@ namespace WPlugZ_CLI
 
             );
             createCommand.AddArgument(pluginNameMkArg);
-            createCommand.AddOption(pluginAuthorOpt);
-            createCommand.AddOption(pluginDescriptionOpt);
-            createCommand.AddOption(pluginIconOpt);
+            createCommand.AddOption(pluginAuthorMkOpt);
+            createCommand.AddOption(pluginDescriptionMkOpt);
+            createCommand.AddOption(pluginIconMkOpt);
             createCommand.AddOption(workingDirectoryOpt);
             createCommand.AddOption(pluginVersionMkOpt);
             createCommand.AddOption(doFullCreationOpt);
@@ -268,7 +268,7 @@ namespace WPlugZ_CLI
                     Logger.SuccessLine("✔ Done!", 0);
 
                 },
-                pluginNameMkArg, pluginAuthorOpt, pluginDescriptionOpt, pluginIconOpt, workingDirectoryOpt, pluginVersionMkOpt, doFullCreationOpt);
+                pluginNameMkArg, pluginAuthorMkOpt, pluginDescriptionMkOpt, pluginIconMkOpt, workingDirectoryOpt, pluginVersionMkOpt, doFullCreationOpt);
             createCommand.AddAlias("create");
             rootCommand.AddCommand(createCommand);
 
@@ -386,7 +386,125 @@ namespace WPlugZ_CLI
             /////// [*]  Bump command ///////
             ////////////// [*] //////////////
             var bumpCommand = new Command("bump", "Bump a WriterClassic plugin");
-            // TODO: implement BUMP logic
+            var pluginNameBmpArg = new Argument<string>("name", "The name of the plugin to bump");
+            var pluginVersionBmpOpt = new Option<int> (
+
+                aliases: new[] { "--version", "-v" },
+                description: "The version of the plugin to bump to (defaults to one above latest)",
+                getDefaultValue: () => -1
+
+            );
+            var pluginAuthorBmpOpt = new Option<string> (
+
+                aliases: new[] { "--author", "-a" },
+                description: "The creator and maintainer of the plugin",
+                getDefaultValue: () => OSEnvironment.GetUsername()
+
+            );
+            var pluginDescriptionBmpOpt = new Option<string> (
+
+                aliases: new[] { "--description", "-d" },
+                description: "The description of the plugin to create",
+                getDefaultValue: () => "WriterClassic Plugin"
+
+            );
+            var pluginIconBmpOpt = new Option<string> (
+
+                aliases: new[] { "--icon", "-i" },
+                description: "The icon of the plugin to create",
+                getDefaultValue: () => Path.Join(AppContext.BaseDirectory, "Assets", "WriterPlugin.png")
+
+            );
+
+            bumpCommand.AddArgument(pluginNameBmpArg);
+            bumpCommand.AddOption(pluginVersionBmpOpt);
+            bumpCommand.AddOption(pluginAuthorBmpOpt);
+            bumpCommand.AddOption(pluginDescriptionBmpOpt);
+            bumpCommand.AddOption(pluginIconBmpOpt);
+
+            bumpCommand.SetHandler(void (name, version, author, desc, icon) =>
+                {
+
+                    Bumper pluginBumper = new(name, version, author, desc, icon, Environment.CurrentDirectory);
+
+                    Logger.SuccessLine("✔ Got correct version number.", 2);
+                    Logger.InfoLine("➦ Creating the new version directory...", 0);
+                    int retCode = pluginBumper.CreateNewVersionDirectory();
+
+                    switch (retCode)
+                    {
+
+                        case 5:
+                            Logger.ErrorLine("✖ The specified plugin is invalid!");
+                            Environment.Exit(4);
+                            break;
+
+                        case 6:
+                            Logger.ErrorLine("✖ The specified version must be between 1 and 1000, both ends included.", 0);
+                            Environment.Exit(4);
+                            break;
+
+                        case 7:
+                            Logger.ErrorLine("✖ The latest version found is v1000 (maximum reached).\nIf you are aware of the existance of versions below 1000 that are not occupied, feel free to use their slots by specifying the '-v' flag.", 1);
+                            Environment.Exit(4);
+                            break;
+
+                        case 8:
+                            Logger.ErrorLine("✖ The specified version already exists.");
+                            Environment.Exit(4);
+                            break;
+
+                        default:
+                            Logger.SuccessLine("✔ Created the version directory successfully.");
+                            break;
+
+                    }
+
+                    Logger.InfoLine("➦ Creating Details.txt...");
+                    pluginBumper.CreateDetailsFile();
+                    Logger.SuccessLine("✔ Created Details.txt!");
+
+                    Logger.InfoLine("➦ Creating the placeholder Python file...");
+                    string pyfilePath = pluginBumper.CreatePlaceholderPythonFile();
+                    Logger.SuccessLine("✔ Created the placeholder Python file!\nFeel free to replace it with your actual file after the bump operation terminates.");
+
+                    Logger.InfoLine("➦ Copying the image to the correct location...");
+                    string iconPath = pluginBumper.CopyImageFileToCorrectLocation();
+                    
+                    if (iconPath == null)
+                    {
+
+                        Logger.ErrorLine("✖ The specified image path is invalid.\nInitiating removal of debris...");
+                        pluginBumper.RemoveDebris();
+                        Logger.WarningLine("⚠ Debris removed! Bump operation exited with Error Code 4.", 0);
+                        Environment.Exit(4);
+                        return;
+
+                    }
+
+                    Logger.SuccessLine("✔ Copied the image to the correct location!");
+                    Logger.InfoLine("➦ Updating the MANIFEST file...");
+                    retCode = pluginBumper.UpdateManifestFile(iconPath, pyfilePath);
+
+                    if (retCode == 9)
+                    {
+
+                        Logger.ErrorLine("✖ The MANIFEST file could not be found.\nInitiating removal of debris...");
+                        pluginBumper.RemoveDebris();
+                        Logger.WarningLine("⚠ Debris removed! Bump operation exited with Error Code 4.", 0);
+                        Environment.Exit(4);
+                        return;
+
+                    }
+
+                    Logger.SuccessLine("✔ Updated the MANIFEST!");
+                    Logger.SuccessLine("✔ Done!", 0);
+
+
+                },
+                pluginNameBmpArg, pluginVersionBmpOpt, pluginAuthorBmpOpt, pluginDescriptionBmpOpt, pluginIconBmpOpt);
+            bumpCommand.AddAlias("bmp");
+            rootCommand.AddCommand(bumpCommand);
 
 
             ////////////// [*] //////////////
