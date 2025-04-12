@@ -49,6 +49,7 @@ namespace WPlugZ_CLI.Plugin
 
         string GetLatestVersion(string pluginPath)
         {
+            string latest = null;
             foreach (string directory in Directory.EnumerateDirectories(pluginPath).Reverse())
             {
 
@@ -56,12 +57,19 @@ namespace WPlugZ_CLI.Plugin
                 {
                     continue;
                 }
-
-                return directory; // [i] considered the latest version
+                if (latest == null)
+                {
+                    latest = directory;
+                    continue;
+                }
+                if (Convert.ToInt32(Path.GetFileName(latest).AsSpan(1).ToString()) < Convert.ToInt32(Path.GetFileName(directory).AsSpan(1).ToString()))
+                {
+                    latest = directory; // [i] considered the latest version
+                }
 
             }
 
-            return null; // [i] couldn't find a single valid version
+            return latest;
         }
 
         private bool IsValidIconFile()

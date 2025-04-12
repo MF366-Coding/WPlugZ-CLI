@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.IO.Compression;
 using System.CommandLine;
 using WPlugZ_CLI.Source;
 using WPlugZ_CLI.Plugin;
@@ -28,10 +29,6 @@ namespace WPlugZ_CLI
         static readonly string API_URL = $"https://api.github.com/repos/{OWNER}/{PROJECT_NAME}/releases/latest";
         
         static readonly HttpClient CLIENT = new();
-
-        static Random randomizer = new();
-
-        static bool allowColors = true; 
 
         /// <summary>
         /// Gets WPlugZ's latest version from the GitHub API and saves it into variable latestVersion.
@@ -92,14 +89,14 @@ namespace WPlugZ_CLI
             if (isLatest)
             {
 
-                Logger.SuccessLine("Your WPlugZ-CLI is up-to-date.", 2);
+                Logger.SuccessLine("Your WPlugZ-CLI is up-to-date.");
             
             }
 
             else
             {
 
-                Logger.WarningLine("Your WPlugZ-CLI might be out-of-date or no info could be gathered on versioning.", 2);
+                Logger.WarningLine("Your WPlugZ-CLI might be out-of-date or no info could be gathered on versioning.", 0);
 
             }
 
@@ -112,9 +109,8 @@ namespace WPlugZ_CLI
 
             if (key.KeyChar != 'y')
             {
-                Logger.ErrorLine("\nOperation cancelled by user input.", 0);
-                Colors.ResetAllEffects();
-                Environment.Exit(0);
+                Logger.ErrorLine("\nOperation cancelled by user input.");
+                ExitAfter.ColorReset(0);
             }
 
         }
@@ -124,7 +120,7 @@ namespace WPlugZ_CLI
 
             var rootCommand = new RootCommand("WPlugZ Plugin Manager CLI");
 
-            // [i] The only 3 global options we really have
+            // [i] The only 2 global options we really have
             var disableUpdateCheckOption = new Option<bool> (
 
                 aliases: new[] { "--disable-update-check", "--dchkupd" },
@@ -216,9 +212,9 @@ namespace WPlugZ_CLI
                     );
 
                     pluginCreator.ClampVersion();
-                    Logger.SuccessLine($"✔ Got version number {pluginCreator.PluginVersion}", 0);
+                    Logger.SuccessLine($"✔ Got version number {pluginCreator.PluginVersion}");
 
-                    Logger.InfoLine("➦ Attempting to create plugin directory...", 2);
+                    Logger.InfoLine("➦ Attempting to create plugin directory...");
                     int retCode = pluginCreator.CreatePluginDirectory();
 
                     switch (retCode)
@@ -226,14 +222,12 @@ namespace WPlugZ_CLI
 
                         case 1:
                             Logger.ErrorLine("✖ The working directory you've specified is invalid.\nAborting...");
-                            Colors.ResetAllEffects();
-                            Environment.Exit(1);
+                            ExitAfter.ColorReset(1);
                             break;
 
                         case 2:
                             Logger.ErrorLine("✖ Failed to create the directory.\nAborting...");
-                            Colors.ResetAllEffects();
-                            Environment.Exit(1);
+                            ExitAfter.ColorReset(1);
                             break;
 
                         default:
@@ -247,12 +241,11 @@ namespace WPlugZ_CLI
 
                     if (imgPath == null)
                     {
-                        Logger.ErrorLine("✖ The specified icon file's path is invalid.", 2);
-                        Colors.ResetAllEffects();
-                        Environment.Exit(2);
+                        Logger.ErrorLine("✖ The specified icon file's path is invalid.");
+                        ExitAfter.ColorReset(2);
                     }
                     
-                    Logger.SuccessLine("✔ Copied the icon to the correct location!", 2);
+                    Logger.SuccessLine("✔ Copied the icon to the correct location!");
                     Logger.InfoLine("➦ Creating the placeholder Python file...");
                     string pyfilePath = pluginCreator.CreatePlaceholderPythonFile();
 
@@ -262,10 +255,10 @@ namespace WPlugZ_CLI
                     Logger.InfoLine("➦ Creating the MANIFEST file...");
                     pluginCreator.CreateManifestFile(imgPath, pyfilePath);
 
-                    Logger.InfoLine("➦ Creating the additional files...", 0);
+                    Logger.InfoLine("➦ Creating the additional files...");
                     pluginCreator.CreateAdditionalFiles();
 
-                    Logger.SuccessLine("✔ Done!", 0);
+                    Logger.SuccessLine("✔ Done!");
 
                 },
                 pluginNameMkArg, pluginAuthorMkOpt, pluginDescriptionMkOpt, pluginIconMkOpt, workingDirectoryOpt, pluginVersionMkOpt, doFullCreationOpt);
@@ -311,13 +304,13 @@ namespace WPlugZ_CLI
                         if (!skip)
                         {
 
-                            Logger.Warning($"⚠ Are you sure you wish to remove plugin {name}?\nThis action is irreversable and will wipe EVERYTHING inside the plugin's folder.\nContinue? (y/n) ");
+                            Logger.Warning($"⚠ Are you sure you wish to remove plugin {name}?\nThis action is irreversable and will wipe EVERYTHING inside the plugin's folder.\nContinue? (y/n) ", 2);
                             ConfirmRemoval();
                             newlineChar = "\n";
 
                         }
 
-                        Logger.InfoLine($"{newlineChar}➦ Initiating removal...", 2);
+                        Logger.InfoLine($"{newlineChar}➦ Initiating removal...");
                         
                         int retCode = pluginDeleter.DeleteEverything();
 
@@ -325,14 +318,12 @@ namespace WPlugZ_CLI
                         {
 
                             Logger.ErrorLine("✖ No such plugin present in the current working directory.");
-                            Colors.ResetAllEffects();
-                            Environment.Exit(3); // [i] invalid plugin
+                            ExitAfter.ColorReset(3); // [i] invalid plugin
                         
                         }
 
-                        Logger.SuccessLine("✔ Removal finished!", 0);
-                        Colors.ResetAllEffects();
-                        Environment.Exit(0);
+                        Logger.SuccessLine("✔ Removal finished!");
+                        ExitAfter.ColorReset(0);
                     }
 
                     else
@@ -346,7 +337,7 @@ namespace WPlugZ_CLI
                         if (!skip)
                         {
 
-                            Logger.Warning($"⚠ Are you sure you wish to remove version {version} of plugin {name}?\nThis action is irreversable and will wipe EVERYTHING inside the version's folder.\nContinue? (y/n) ");
+                            Logger.Warning($"⚠ Are you sure you wish to remove version {version} of plugin {name}?\nThis action is irreversable and will wipe EVERYTHING inside the version's folder.\nContinue? (y/n) ", 2);
                             ConfirmRemoval();
                             newlineChar = "\n";
 
@@ -359,19 +350,16 @@ namespace WPlugZ_CLI
                         if (retCode == 3)
                         {
                             Logger.ErrorLine("✖ No such plugin present in the current working directory.");
-                            Colors.ResetAllEffects();
-                            Environment.Exit(3); // [i] invalid plugin
+                            ExitAfter.ColorReset(3); // [i] invalid plugin
                         }
                         if (retCode == 4)
                         {
-                            Logger.ErrorLine("✖ Plugin has no such version.", 2);
-                            Colors.ResetAllEffects();
-                            Environment.Exit(3); // [i] invalid version
+                            Logger.ErrorLine("✖ Plugin has no such version.");
+                            ExitAfter.ColorReset(3); // [i] invalid version
                         }
 
-                        Logger.SuccessLine("✔ Removal finished!", 0);
-                        Colors.ResetAllEffects();
-                        Environment.Exit(0);
+                        Logger.SuccessLine("✔ Removal finished!");
+                        ExitAfter.ColorReset(0);
                     }
 
                 },
@@ -427,8 +415,8 @@ namespace WPlugZ_CLI
 
                     Bumper pluginBumper = new(name, version, author, desc, icon, Environment.CurrentDirectory);
 
-                    Logger.SuccessLine("✔ Got correct version number.", 2);
-                    Logger.InfoLine("➦ Creating the new version directory...", 0);
+                    Logger.SuccessLine("✔ Got correct version number.");
+                    Logger.InfoLine("➦ Creating the new version directory...");
                     int retCode = pluginBumper.CreateNewVersionDirectory();
 
                     switch (retCode)
@@ -436,22 +424,22 @@ namespace WPlugZ_CLI
 
                         case 5:
                             Logger.ErrorLine("✖ The specified plugin is invalid!");
-                            Environment.Exit(4);
+                            ExitAfter.ColorReset(4);
                             break;
 
                         case 6:
-                            Logger.ErrorLine("✖ The specified version must be between 1 and 1000, both ends included.", 0);
-                            Environment.Exit(4);
+                            Logger.ErrorLine("✖ The specified version must be between 1 and 1000, both ends included.");
+                            ExitAfter.ColorReset(4);
                             break;
 
                         case 7:
-                            Logger.ErrorLine("✖ The latest version found is v1000 (maximum reached).\nIf you are aware of the existance of versions below 1000 that are not occupied, feel free to use their slots by specifying the '-v' flag.", 1);
-                            Environment.Exit(4);
+                            Logger.ErrorLine("✖ The latest version found is v1000 (maximum reached).\nIf you are aware of the existance of versions below 1000 that are not occupied, feel free to use their slots by specifying the '-v' flag.");
+                            ExitAfter.ColorReset(4);
                             break;
 
                         case 8:
                             Logger.ErrorLine("✖ The specified version already exists.");
-                            Environment.Exit(4);
+                            ExitAfter.ColorReset(4);
                             break;
 
                         default:
@@ -477,7 +465,7 @@ namespace WPlugZ_CLI
                         Logger.ErrorLine("✖ The specified image path is invalid.\nInitiating removal of debris...");
                         pluginBumper.RemoveDebris();
                         Logger.WarningLine("⚠ Debris removed! Bump operation exited with Error Code 4.", 0);
-                        Environment.Exit(4);
+                        ExitAfter.ColorReset(4);
                         return;
 
                     }
@@ -492,7 +480,7 @@ namespace WPlugZ_CLI
                         Logger.ErrorLine("✖ The MANIFEST file could not be found.\nInitiating removal of debris...");
                         pluginBumper.RemoveDebris();
                         Logger.WarningLine("⚠ Debris removed! Bump operation exited with Error Code 4.", 0);
-                        Environment.Exit(4);
+                        ExitAfter.ColorReset(4);
                         return;
 
                     }
@@ -505,6 +493,137 @@ namespace WPlugZ_CLI
                 pluginNameBmpArg, pluginVersionBmpOpt, pluginAuthorBmpOpt, pluginDescriptionBmpOpt, pluginIconBmpOpt);
             bumpCommand.AddAlias("bmp");
             rootCommand.AddCommand(bumpCommand);
+
+
+            ////////////// [*] //////////////
+            /////// [*]  Pack command ///////
+            ////////////// [*] //////////////
+            var packCommand = new Command("pack", "Pack your plugin into a ZIP file that can be extracted anytime");
+            var pluginNamePkArg = new Argument<string>("name", "The name of the plugin to pack");
+            var pluginVersionPkArg = new Argument<int>("version", "The version of the plugin to pack");
+            var saveLocation = new Option<string> (
+
+                aliases: new[] { "--saveto", "-s" },
+                description: "Save the package in a specific location instead of the working directory",
+                getDefaultValue: () => Environment.CurrentDirectory
+
+            );
+            var useUniversalFormatOpt = new Option<bool> (
+
+                aliases: new[] { "--universal", "--classic", "-Z" },
+                description: "Use the ZIP format instead of WPlugZ-CLI (both are zip and behave exactly the same, but certain programs may prefer the first)",
+                getDefaultValue: () => false
+
+            );
+            var compressionLevelOpt = new Option<string> (
+
+                aliases: new[] { "--level", "--compression", "-l" },
+                description: "Specify a compression level instead of default = Optimal",
+                getDefaultValue: () => "optimal"
+
+            ).FromAmong(
+                "o", "opt", "optimal",
+                "s", "small", "smallestSize",
+                "n", "none", "noCompression", "zero",
+                "f", "fast", "fastest"
+            );
+
+            packCommand.AddArgument(pluginNamePkArg);
+            packCommand.AddArgument(pluginVersionPkArg);
+            packCommand.AddOption(saveLocation);
+            packCommand.AddOption(useUniversalFormatOpt);
+            packCommand.AddOption(compressionLevelOpt);
+
+            packCommand.SetHandler(void (name, version, location, universal, level) =>
+                {
+
+                    CompressionLevel actualLevel;
+
+                    switch (level) // [i] this switch statement is ordered from slowest to fastest compression
+                    {               // [i] but also from smallest file size to largest file size
+
+                        case "smallestSize":
+                        case "small":
+                        case "s":
+                            actualLevel = CompressionLevel.SmallestSize;
+                            break;
+
+                        case "optimal":
+                        case "opt":
+                        case "o":
+                            actualLevel = CompressionLevel.Optimal;
+                            break;
+                        
+                        case "fastest":
+                        case "fast":
+                        case "f":
+                            actualLevel = CompressionLevel.Fastest;
+                            break;
+
+                        case "noCompression":
+                        case "none":
+                        case "n":
+                        case "zero":
+                            actualLevel = CompressionLevel.NoCompression;
+                            break;
+
+                        default: // [i] this will never happen cuz of FromAmong
+                                // [i] but C# loves to scream at me if it thinks actualLevel is unassigned
+                            actualLevel = CompressionLevel.Optimal;
+                            break;
+
+                    }
+
+                    Logger.SuccessLine($"✔ Using compression level '{level}'...");
+
+                    PackHelper packHelper = new(name, version, location, universal, actualLevel, Environment.CurrentDirectory);
+                    int retCode = packHelper.PackPluginVersion();
+
+                    Logger.InfoLine("➦ Initiating 'pack' operation...");
+
+                    switch (retCode)
+                    {
+
+                        case 10:
+                        case 13:
+                            Logger.ErrorLine("✖ The specified version is invalid.");
+                            ExitAfter.ColorReset(5);
+                            break;
+
+                        case 11:
+                            Logger.ErrorLine("✖ The specified plugin is invalid.");
+                            ExitAfter.ColorReset(5);
+                            break;
+
+                        case 12:
+                            Logger.ErrorLine("✖ The specified save location is invalid.");
+                            ExitAfter.ColorReset(5);
+                            break;
+
+                        case 14:
+                            Logger.ErrorLine("✖ An unexpected error occured while attempting to zip the version of the plugin you specified.");
+                            ExitAfter.ColorReset(5);
+                            break;
+
+                    }
+
+                    Logger.SuccessLine("✔ Successfully created the zip package!");
+
+                },
+                pluginNamePkArg, pluginVersionPkArg, saveLocation, useUniversalFormatOpt, compressionLevelOpt);
+            rootCommand.AddCommand(packCommand);
+
+
+            ////////////// [*] //////////////
+            ////// [*] Extract command //////
+            ////////////// [*] //////////////
+            var xtrCommand = new Command("extract", "Please extract your WPlugZ projects manually") { IsHidden = true };
+            xtrCommand.SetHandler(async () => {
+                Logger.ErrorLine("✖ If you intend to extract a package created by WPlugZ's 'pack' command, please do so manually.");
+                Colors.ResetAllEffects();
+                await rootCommand.InvokeAsync("--help");
+            });
+            rootCommand.AddCommand(xtrCommand);
 
 
             ////////////// [*] //////////////
@@ -537,8 +656,7 @@ namespace WPlugZ_CLI
                     if (accessPluginDocs)
                     {
                         WebBrowser.OpenURL(PLUGIN_API_URL);
-                        Colors.ResetAllEffects();
-                        Environment.Exit(0);
+                        ExitAfter.ColorReset(0);
                     }
 
                 },
