@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.CommandLine;
 using WPlugZ_CLI.Source;
 using WPlugZ_CLI.Plugin;
+using System.Security.Authentication.ExtendedProtection;
 
 
 namespace WPlugZ_CLI
@@ -24,10 +25,19 @@ namespace WPlugZ_CLI
         public static readonly string OWNER = "MF366-Coding";
         public static readonly string PROJECT_NAME = "WPlugZ-CLI";
         public static readonly string PLUGIN_API_URL = "https://github.com/MF366-Coding/WriterClassic/wiki/Plugin-API-(v10.1.1-)";
+        static readonly string ASCII_ART = @"██╗    ██╗██████╗ ██╗     ██╗   ██╗ ██████╗ ███████╗               ██████╗██╗     ██╗
+██║    ██║██╔══██╗██║     ██║   ██║██╔════╝ ╚══███╔╝              ██╔════╝██║     ██║
+██║ █╗ ██║██████╔╝██║     ██║   ██║██║  ███╗  ███╔╝     █████╗    ██║     ██║     ██║
+██║███╗██║██╔═══╝ ██║     ██║   ██║██║   ██║ ███╔╝      ╚════╝    ██║     ██║     ██║
+╚███╔███╔╝██║     ███████╗╚██████╔╝╚██████╔╝███████╗              ╚██████╗███████╗██║
+ ╚══╝╚══╝ ╚═╝     ╚══════╝ ╚═════╝  ╚═════╝ ╚══════╝               ╚═════╝╚══════╝╚═╝";
+        static readonly string COPYRIGHT_MESSAGE = "Copyright (c) 2025 MF366";
 
         /// <summary>The GitHub API endpoint where the latest version data is</summary>
         static readonly string API_URL = $"https://api.github.com/repos/{OWNER}/{PROJECT_NAME}/releases/latest";
         
+        static readonly Random randomizer = new(); 
+
         static readonly HttpClient CLIENT = new();
 
         /// <summary>
@@ -102,7 +112,7 @@ namespace WPlugZ_CLI
 
         }
 
-        private static void ConfirmRemoval()
+        static void ConfirmRemoval()
         {
 
             var key = Console.ReadKey();
@@ -115,15 +125,41 @@ namespace WPlugZ_CLI
 
         }
 
+        static void PrintAsciiArt()
+        {
+
+            string color = Colors.PickLightish256ColorCode(randomizer);
+            Console.Write(color);
+            Console.Write(ASCII_ART);
+            Console.Write("\n");
+            Colors.ResetAllEffects();
+
+        }
+
+        static void PrintCopyrightMessage()
+        {
+
+            string color = Colors.PickLightish256ColorCode(randomizer);
+            Console.Write(color);
+            Console.Write(COPYRIGHT_MESSAGE);
+            Console.Write("\n");
+            Colors.ResetAllEffects();
+
+        }
+
         public static async Task Main(string[] args)
         {
 
             var rootCommand = new RootCommand("WPlugZ Plugin Manager CLI");
 
+            PrintAsciiArt();
+            PrintCopyrightMessage();
+            Console.Write("\n");
+
             // [i] The only 2 global options we really have
             var disableUpdateCheckOption = new Option<bool> (
 
-                aliases: new[] { "--disable-update-check", "--dchkupd" },
+                aliases: new[] { "--disable-update-check", "--dchkupd", "-D" },
                 description: "Disable update checks on startup",
                 getDefaultValue: () => false
 
@@ -131,7 +167,7 @@ namespace WPlugZ_CLI
 
             var accessPluginDocsOption = new Option<bool> (
 
-                aliases: new[] { "--info", "-w" },
+                aliases: new[] { "--pluginapi", "-A" },
                 description: "Open the online Plugin API documentation",
                 getDefaultValue: () => false
 
@@ -630,7 +666,71 @@ namespace WPlugZ_CLI
             /////// [*]  Test command ///////
             ////////////// [*] //////////////
             var testCommand = new Command("test", "Test a version of a WriterClassic plugin with WriterClassic");
-            // TODO: implement TEST logic
+            var pluginNameTestArg = new Argument<string>("name", "The name of the plugin to pack");
+            var pluginVersionTestArg = new Argument<int>("version", "The version of the plugin to pack");
+            var writerClassicPath = new Argument<string>("writerclassic", "The path to WriterClassic");
+            var forceOverwriteOpt = new Option<bool> (
+
+                aliases: new[] { "--force", "--overwrite", "-F" },
+                description: "Force the overwriting of plugin #1000",
+                getDefaultValue: () => false
+
+            );
+            testCommand.SetHandler(void (name, version, path, force) =>
+            {
+
+                Tester testHelper = new(name, version, path, force, Environment.CurrentDirectory);
+
+                int retCode = testHelper.InitiateTest();
+
+                Logger.InfoLine("➦ Initiating 'test' operation...");
+
+                switch (retCode)
+                {
+
+                    case 15:
+                    case 17:
+                        Logger.ErrorLine("✖ The specified version is invalid.");
+                        ExitAfter.ColorReset(6);
+                        break;
+
+                    case 16:
+                        Logger.ErrorLine("✖ The specified plugin is invalid.");
+                        ExitAfter.ColorReset(6);
+                        break;
+
+                    case 18:
+                        Logger.ErrorLine("✖ The specified WriterClassic path is invalid.");
+                        ExitAfter.ColorReset(6);
+                        break;
+
+                    case 19:
+                        Logger.WarningLine("⚠ There is already a plugin at slot 1000. If you wish to overwrite it, run this command again with the flag '--force' enabled, but beware this will overwrite EVERYTHING you have inside the plugin #1000's folder.");
+                        ExitAfter.ColorReset(6);
+                        break;
+
+                }
+
+                Logger.InfoLine(":: [PROCESS OUTPUT] ::");
+                Logger.InfoLine("Run plugin 1000 - that's your plugin! (Should be the last on the list in the PluginCentral.)");
+                Colors.ResetAllEffects();
+                int newRetCode = testHelper.RunProcess();
+                
+                if (newRetCode != 0)
+                {
+                    Logger.ErrorLine($"✖ An unexpected error occured while attempting to run WriterClassic - are you sure the given path is correct?\nWriterClassic exited with Error Code #{newRetCode}.");
+                    ExitAfter.ColorReset(7);
+                }
+                
+                Logger.SuccessLine("✔ Done.");
+
+            }, pluginNameTestArg, pluginVersionTestArg, writerClassicPath, forceOverwriteOpt);
+
+            testCommand.AddArgument(pluginNameTestArg);
+            testCommand.AddArgument(pluginVersionTestArg);
+            testCommand.AddArgument(writerClassicPath);
+            testCommand.AddOption(forceOverwriteOpt);
+            rootCommand.AddCommand(testCommand);
 
 
             ////////////// [*] //////////////

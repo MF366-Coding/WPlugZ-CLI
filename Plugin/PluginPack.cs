@@ -51,6 +51,7 @@ namespace WPlugZ_CLI.Plugin
             string plausiblePath = Path.Join(pluginPath, $"v{version}");
             return Directory.Exists(plausiblePath) ? plausiblePath : null;
         }
+        
         string GetRequestedExtension()
         {
             return useZipExtension == true ? "zip" : "wplugz";

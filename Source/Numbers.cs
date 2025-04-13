@@ -14,12 +14,9 @@ namespace WPlugZ_CLI
         public static int ClampInteger(int integer, int min, int max)
         {
 
-            if (integer < min)
-            {
-                return min;
-            }
-
-            return integer > max ? max : integer;
+            if (integer < min) return min;
+            if (integer > max) return max;
+            return integer;
 
         }
 
