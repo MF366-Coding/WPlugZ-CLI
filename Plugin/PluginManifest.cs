@@ -4,8 +4,11 @@ using System.Collections.Generic;
 using System.CommandLine.Help;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using Microsoft.VisualBasic;
 using WPlugZ_CLI.Source;
 
 
@@ -178,7 +181,8 @@ namespace WPlugZ_CLI.Plugin
                 {
 
                     case "uncompatible":
-                        if (pair.Value is string[] uncompatibleVersions)
+                        var uncompatibleVersions = pair.Value as object[];
+                        if (uncompatibleVersions != null)
                         {
 
                             if (uncompatibleVersions.Length < 1)
@@ -190,15 +194,15 @@ namespace WPlugZ_CLI.Plugin
                             else
                             {
 
-                                foreach (string specifiedVersion in uncompatibleVersions)
+                                foreach (var specifiedVersion in uncompatibleVersions)
                                 {
-
-                                    if (Regex.IsMatch(specifiedVersion, @"v[3-9]\.[0-9]{1,2}\.[0-9]+") | Regex.IsMatch(specifiedVersion, @"v10\.[0-6]\.[0-2]"))
+                                    
+                                    if (Regex.IsMatch(specifiedVersion.ToString(), @"v[3-9]\.[0-9]{1,2}\.[0-9]+") | Regex.IsMatch(specifiedVersion.ToString(), @"v10\.[0-6]\.[0-2]"))
                                     {
                                         problems++;
                                         MRedundantUseOfUncompatible.PrintMessage($"{specifiedVersion} is uncompatible with MANIFEST files by default, so it can be removed from the list - {versionTag}:{pair.Key}");
                                     }
-                                    else if (!Regex.IsMatch(specifiedVersion, @"v[1-9][0-9]+\.[0-9]+\.[0-9]+"))
+                                    else if (!Regex.IsMatch(specifiedVersion.ToString(), @"v[1-9][0-9]+\.[0-9]+\.[0-9]+"))
                                     {
                                         problems++;
                                         MRedundantUseOfUncompatible.PrintMessage($"{specifiedVersion} is not a WriterClassic version - {versionTag}:{pair.Key}");
@@ -218,7 +222,8 @@ namespace WPlugZ_CLI.Plugin
                         break;
 
                     case "name":
-                        if (pair.Value is string pluginName)
+                        var pluginName = pair.Value as string;
+                        if (pluginName != null)
                         {
 
                             foreach (char forbiddenChar in Path.GetInvalidPathChars())
@@ -248,7 +253,8 @@ namespace WPlugZ_CLI.Plugin
                         break;
 
                     case "description":
-                        if (pair.Value is string pluginDescription)
+                        var pluginDescription = pair.Value as string;
+                        if (pluginDescription != null)
                         {
                             if (pluginDescription.Length > 60) { problems++; MLongParameter.PrintMessage($"The string exceeds 60 characters - {versionTag}:{pair.Key}"); }
                         }
@@ -262,12 +268,14 @@ namespace WPlugZ_CLI.Plugin
                         break;
 
                     case "author":
-                        if (pair.Value is not string) { problems++; MTypeError.PrintMessage($"Expected a string but got another data type instead - {versionTag}:{pair.Key}"); }                       
+                        var author = pair.Value as string;
+                        if (author == null) { problems++; MTypeError.PrintMessage($"Expected a string but got another data type instead - {versionTag}:{pair.Key}"); }                       
                         break;
 
                     case "imagefile":
                     case "pyfile":
-                        if (pair.Value is string imagePyFile)
+                        var imagePyFile = pair.Value as string;
+                        if (imagePyFile != null)
                         {
                             if (placeholders.Contains(imagePyFile))
                             {
@@ -285,7 +293,8 @@ namespace WPlugZ_CLI.Plugin
                         break;
 
                     case "zipfile":
-                        if (pair.Value is string zipFile)
+                        var zipFile = pair.Value as string;
+                        if (zipFile != null)
                         {
                             if (placeholders.Contains(zipFile)) {hints++; MPlaceholderReminder.PrintMessage($"Use of placeholder text; don't forget to use a correct URL to the file later on - {versionTag}:{pair.Key}"); }
                             
@@ -303,7 +312,7 @@ namespace WPlugZ_CLI.Plugin
 
                     case "exclude":
                         hints++;
-                        MWrongCall.PrintMessage("Used 'exclude' but probably meant 'uncompatible' - {versionTag}:{pair.Key}");
+                        MWrongCall.PrintMessage($"Used 'exclude' but probably meant 'uncompatible' - {versionTag}:{pair.Key}");
                         break;
                     
                     default:

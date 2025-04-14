@@ -123,11 +123,29 @@ namespace WPlugZ_CLI.Source
 
                 JsonObject jsonObject => new JSON(jsonObject),
                 JsonArray jsonArray => jsonArray.Select(arrayItem => ConvertJsonNodeToReadableType<object>(arrayItem)).ToArray(),
-                JsonValue jsonValue => jsonValue.GetValue<object>(),
+                JsonValue jsonValue => ConvertJsonValueToType<T>(jsonValue),
                 _ => throw new InvalidOperationException($"Unsupported type: {node?.GetType()}")
 
             });
 
+        }
+
+        private object ConvertJsonValueToType<T>(JsonValue jsonValue)
+        {
+            if (jsonValue.TryGetValue(out JsonElement element))
+            {
+                return element.ValueKind switch
+                {
+                    JsonValueKind.String => element.GetString(),
+                    JsonValueKind.Number => element.TryGetInt32(out var intValue) ? intValue : element.GetDouble(),
+                    JsonValueKind.True => true,
+                    JsonValueKind.False => false,
+                    JsonValueKind.Null => null,
+                    _ => element
+                };
+            }
+
+            throw new InvalidOperationException("Failed to convert JsonValue");
         }
 
         /// <summary>
@@ -174,7 +192,7 @@ namespace WPlugZ_CLI.Source
         }
 
         /// <summary>
-        /// Enumerates KeyValue pairs for the whole JSON object, while converting the data types to compatible ones.
+        /// Enumerates KeyValue pairs for the whole JSON object, while converting the data types to JsonNodes.
         /// </summary>
         /// <returns>Key Value pair for each iteration.</returns>
         /// <exception cref="InvalidOperationException">The root node is not a JSON object.</exception>
