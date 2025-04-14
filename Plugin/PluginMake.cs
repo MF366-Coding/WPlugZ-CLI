@@ -130,23 +130,23 @@ namespace WPlugZ_CLI.Plugin
         /// <param name="pathToPythonFile">The path to the Python file created with CreatePlaceholderPythonFile</param>
         public void CreateManifestFile(string pathToIcon, string pathToPythonFile)
         {
-            var manifestData = new Dictionary<string, object>
+            var manifestData = new Dictionary<string, string>
             {
-                [$"v{version}"] = new Dictionary<string, string>
-                {
-                    { "name", name },
-                    { "author", author },
-                    { "description", description },
-                    { "imagefile", pathToIcon },
-                    { "pyfile", pathToPythonFile }
-                }
+                { "name", name },
+                { "author", author },
+                { "description", description },
+                { "imagefile", pathToIcon },
+                { "pyfile", pathToPythonFile }
             };
 
-            string jsonAsString = JsonSerializer.Serialize(manifestData, new JsonSerializerOptions { WriteIndented = true });
-            JSON manifest = new();
-            manifest.Load(jsonAsString);
-            manifest.Save(Path.Join(workingDir, name, "manifest.json"));
+            var manifestDataAsObject = manifestData.ToDictionary(
+                pair => pair.Key,
+                pair => (object)pair.Value
+            );
 
+            JSON manifest = new JSON()
+                                    .Set($"v{version}", manifestDataAsObject);
+            manifest.Save(Path.Join(workingDir, name, "manifest.json"));
         }
 
         /// <summary>

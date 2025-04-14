@@ -14,6 +14,7 @@
 		<PublishTrimmed>false</PublishTrimmed>
 		<WarningsAsErrors>CS1998</WarningsAsErrors> <!-- async function lacks await instruction -->
 		<NoWarn>CS0121</NoWarn> <!-- async function lacks await instruction -->
+		<NoWarn>CS0108</NoWarn> <!-- async function lacks await instruction -->
 
 		<OptimizeExecutable Condition="'$(OptimizeExecutable)' == ''">true</OptimizeExecutable>
 		<BuildWPlugZDocs Condition="'$(BuildWPlugZDocs)' == ''">none</BuildWPlugZDocs>

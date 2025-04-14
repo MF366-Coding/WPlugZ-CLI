@@ -56,12 +56,13 @@ namespace WPlugZ_CLI.Plugin
                 if (!Regex.IsMatch(Path.GetFileName(directory), @"^v(1000|[1-9][0-9]{0,2})$"))
                 {
                     continue;
-                }
+                }                
                 if (latest == null)
                 {
                     latest = directory;
                     continue;
                 }
+                if (Convert.ToInt32(Path.GetFileName(directory).AsSpan(1).ToString()) == 1000) return directory; // [i] can't go bigger than that
                 if (Convert.ToInt32(Path.GetFileName(latest).AsSpan(1).ToString()) < Convert.ToInt32(Path.GetFileName(directory).AsSpan(1).ToString()))
                 {
                     latest = directory; // [i] considered the latest version
@@ -182,21 +183,24 @@ namespace WPlugZ_CLI.Plugin
             string manifestPath = Path.Join(workingDir, name, "manifest.json");
             if (!File.Exists(manifestPath)) return 9;
 
-            JSON manifestAsJson = new();
-            manifestAsJson.LoadFromFile(manifestPath);
-
-            JSON innerJson = new();
-            innerJson.Load(JsonSerializer.Serialize(new Dictionary<string, string>
+            Dictionary<string, string> manifestData = new()
             {
                 { "name", name },
                 { "author", author },
                 { "description", description },
                 { "imagefile", pathToIcon },
                 { "pyfile", pathToPythonFile }
-            },
-            new JsonSerializerOptions { WriteIndented = true }));
+            };
 
-            manifestAsJson.SetNestedJson($"v{version}", innerJson);
+            var manifestDataAsObject = manifestData.ToDictionary(
+                pair => pair.Key,
+                pair => (object)pair.Value
+            );
+
+            JSON manifestAsJson = new JSON()
+                                            .LoadFromFile(manifestPath)
+                                            .Set($"v{version}", manifestDataAsObject);
+            
             manifestAsJson.Save(manifestPath);
             return 0;
 

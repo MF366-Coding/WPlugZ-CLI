@@ -36,6 +36,8 @@ namespace WPlugZ_CLI
         /// <summary>The GitHub API endpoint where the latest version data is</summary>
         static readonly string API_URL = $"https://api.github.com/repos/{OWNER}/{PROJECT_NAME}/releases/latest";
         
+        static readonly string[] PLACEHOLDERS = {"###", "...", "."};
+
         static readonly Random randomizer = new(); 
 
         static readonly HttpClient CLIENT = new();
@@ -358,8 +360,7 @@ namespace WPlugZ_CLI
                         
                         }
 
-                        Logger.SuccessLine("✔ Removal finished!");
-                        ExitAfter.ColorReset(0);
+                        Logger.SuccessLine("✔ Removal finished!\n");
                     }
 
                     else
@@ -394,8 +395,7 @@ namespace WPlugZ_CLI
                             ExitAfter.ColorReset(3); // [i] invalid version
                         }
 
-                        Logger.SuccessLine("✔ Removal finished!");
-                        ExitAfter.ColorReset(0);
+                        Logger.SuccessLine("✔ Removal finished!\n");
                     }
 
                 },
@@ -737,8 +737,53 @@ namespace WPlugZ_CLI
             /// [*] Manifest verification ///
             ////////////// [*] //////////////
             var verifyCommand = new Command("verify", "Run a MANIFEST verification on a WriterClassic plugin");
-            // TODO: implement Manifest verification logic
+            var manifestFilePathArg = new Argument<string>("file", "The path to the MANIFEST file");
+            var ignoreHintsOpt = new Option<bool> (
+
+                aliases: new[] { "--ignore-hints", "--no-hints", "-H" },
+                description: "Disables hints",
+                getDefaultValue: () => false
+
+            );
+            verifyCommand.SetHandler(void (manifestFile, ignoreHints) =>
+            {
+
+                ManifestHelper manifestHelper = new(manifestFile, ignoreHints, PLACEHOLDERS);
+
+                int retCode = manifestHelper.AnalyseFile();
+
+                Logger.InfoLine("➦ Initiating 'verify' operation...");
+                Logger.InfoLine(":: INITIATING BASIC FILE ANALYSIS ::");
+
+                switch (retCode)
+                {
+
+                    case 21:
+                        Logger.ErrorLine("✖ The specified MANIFEST file is invalid.");
+                        ExitAfter.ColorReset(8);
+                        break;
+
+                }
+
+                Colors.ResetAllEffects();
+                Console.Write("\n");
+                Logger.InfoLine(":: INITIATING IN-DEPTH ANALYSIS ::");
+                manifestHelper.InitiateAnalysis();
+                Console.Write("\n");
+
+                Logger.SuccessLine(":: SUMMARY ::");
+                Logger.WarningLine($"Problems: {Colors.RESET}{manifestHelper.Problems}", 2);
+                Logger.InfoLine($"Hints and Reminders: {Colors.RESET}{manifestHelper.Hints}", 0);
+                Logger.WarningLine($"Supressing hints: {Colors.RESET}{(manifestHelper.IgnoreHints ? "yes" : "no")}", 0);
+
+                Colors.ResetAllEffects();
+
+            }, manifestFilePathArg, ignoreHintsOpt);
+
+            verifyCommand.AddArgument(manifestFilePathArg);
+            verifyCommand.AddOption(ignoreHintsOpt);
             verifyCommand.AddAlias("manifest");
+            rootCommand.AddCommand(verifyCommand);
 
 
             ////////////// [*] //////////////
