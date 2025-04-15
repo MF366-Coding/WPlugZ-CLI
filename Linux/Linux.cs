@@ -58,6 +58,13 @@ namespace WPlugZ_CLI.Source
 
         }
 
+        public static string PythonDenominator
+        {
+
+            get { return "python3"; }
+
+        }
+
     }
 
 }

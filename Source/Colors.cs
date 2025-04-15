@@ -32,12 +32,12 @@ namespace WPlugZ_CLI.Source
 
         public static string PickRandom256ColorCode(Random random)
         {   
-            return Use256ColorCode(Numbers.ClampInteger(random.Next(), 0, 255));
+            return Use256ColorCode(random.Next(0, 256));
         }
 
         public static string PickLightish256ColorCode(Random random)
         {   
-            return Use256ColorCode(Numbers.ClampInteger(random.Next(), 18, 232)); // [i] enforces light-ish colors (ones that can actually be seen on dark backgrounds)
+            return Use256ColorCode(random.Next(18, 233)); // [i] enforces light-ish colors (ones that can actually be seen on dark backgrounds)
         }
 
         public static void ResetAllEffects()

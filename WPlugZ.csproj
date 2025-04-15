@@ -14,18 +14,16 @@
 		<PublishTrimmed>false</PublishTrimmed>
 		<WarningsAsErrors>CS1998</WarningsAsErrors> <!-- async function lacks await instruction -->
 		<NoWarn>CS0121</NoWarn> <!-- async function lacks await instruction -->
+		<NoWarn>CS0108</NoWarn>
 
 		<OptimizeExecutable Condition="'$(OptimizeExecutable)' == ''">true</OptimizeExecutable>
-		<BuildWPlugZDocs Condition="'$(BuildWPlugZDocs)' == ''">none</BuildWPlugZDocs>
+		<BuildDocs Condition="'$(BuildDocs)' == ''">false</BuildDocs>
 	</PropertyGroup>
 
 	<!-- Documentation -->
-	<Target Name="GenDocs" Condition="'$(BuildWPlugZDocs)' != 'none'" BeforeTargets="Build">
-		<Message Text="Building documentation: $(BuildWPlugZDocs)" />
-		<Exec Command="pandoc Docs/Manifest.org -o Docs/Manifest.html" Condition="'$(BuildWPlugZDocs)' == 'manifest' or '$(BuildWPlugZDocs)' == 'both' or '$(BuildWPlugZDocs)' == 'all' " />
-		<Exec Command="pandoc Docs/HowToUse.org -o Docs/HowToUse.html" Condition="'$(BuildWPlugZDocs)' == 'howToUse' or '$(BuildWPlugZDocs)' == 'both' or '$(BuildWPlugZDocs)' == 'all' " />
+	<Target Name="GenDocs" Condition="'$(BuildDocs)' == 'true'" BeforeTargets="Build">
 		<PropertyGroup>
-			<GenerateDocumentationFile Condition="'$(BuildWPlugZDocs)' == 'extra' or '$(BuildWPlugZDocs)' == 'all'">true</GenerateDocumentationFile>
+			<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		</PropertyGroup>
 	</Target>
 
@@ -71,18 +69,10 @@
 		<PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
 	</ItemGroup>
 
-	<!-- Documentation if built only -->
-	<ItemGroup Condition="'$(BuildWPlugZDocs)' != 'none' and '$(BuildWPlugZDocs)' != 'extra' and Exists('Docs/Manifest.html')">
-		<None Include="Docs/Manifest.html" Pack="true" CopyToOutputDirectory="PreserveNewest" />
-	</ItemGroup>
-	<ItemGroup Condition="'$(BuildWPlugZDocs)' != 'none' and '$(BuildWPlugZDocs)' != 'extra' and Exists('Docs/HowToUse.html')">
-		<None Include="Docs/HowToUse.html" Pack="true" CopyToOutputDirectory="PreserveNewest" />
-	</ItemGroup>
-
 	<!-- windows only -->
 	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
-		<Compile Include="Windows\*.cs" />
 		<Compile Remove="Linux\*.cs" />
+		<Compile Include="Windows\*.cs" />
 	</ItemGroup>
 
 </Project>

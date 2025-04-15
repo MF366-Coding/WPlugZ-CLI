@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using WPlugZ_CLI.Source;
 
 
@@ -128,21 +130,23 @@ namespace WPlugZ_CLI.Plugin
         /// <param name="pathToPythonFile">The path to the Python file created with CreatePlaceholderPythonFile</param>
         public void CreateManifestFile(string pathToIcon, string pathToPythonFile)
         {
-            string jsonAsString = $@"
-            {{
-                ""v{version}"": {{
-                    ""name"": ""{name}"",
-                    ""author"": ""{author}"",
-                    ""description"": ""{description}"",
-                    ""imagefile"": ""{pathToIcon}"",
-                    ""pyfile"": ""{pathToPythonFile}""
-                }}
-            }}";
+            var manifestData = new Dictionary<string, string>
+            {
+                { "name", name },
+                { "author", author },
+                { "description", description },
+                { "imagefile", pathToIcon },
+                { "pyfile", pathToPythonFile }
+            };
 
-            JSON manifest = new JSON();
-            manifest.Load(jsonAsString);
+            var manifestDataAsObject = manifestData.ToDictionary(
+                pair => pair.Key,
+                pair => (object)pair.Value
+            );
+
+            JSON manifest = new JSON()
+                                    .Set($"v{version}", manifestDataAsObject);
             manifest.Save(Path.Join(workingDir, name, "manifest.json"));
-
         }
 
         /// <summary>

@@ -1,6 +1,6 @@
 # WPlugZ-CLI
-> ### Now written in C# (v3.1.0 coming soon).
-Not just a rewrite. This version does actually include nee features.
+> Now written in C# (v3.1.0+).
+Not just a rewrite. This version does actually include new features.
 
 > The only CLI you'll ever need for developing WriterClassic plugins.
 
@@ -14,73 +14,50 @@ Not just a rewrite. This version does actually include nee features.
 
 Need help getting started with making your very own WriterClassic plugin? Then, use **WPluZ**, a powerful **CLI** for helping you manage your own plugins.
 
-## Coming Soon
-- [ ] Better Documentation
-- [ ] Sync Details, Manifest, etc... with one command
-- [ ] Add default image with one command (useful if accidentally removed)
-- [ ] ...and much more!
-
------------------------
-
-```
-Anything below this point is bound to be changed in the near future.
-```
-
------------------------
-
 ## Features
-- Creating a new plugin (`new`)
-- Bumping and managing versions (`bump`)
-- Removing a plugin (`remove`)
+- Creating a new plugin (`new` / `create`)
+- Bumping the plugin to a new version (`bump` / `bmp`)
+- Removing a plugin or a specific version of one (`remove` / `delete` / `rm` / `del`)
 - Testing a plugin using WriterClassic (`test`)
-- **NEW!** Verify if a MANIFEST file is structured correctly (`verify` or use the **WPlugZ Manifest Verify** script)
+- Verify if a MANIFEST file is structured correctly (`verify` / `manifest`)
+- Creating a ZIP package (`pack`)
 
 ## Anti-Features
-- Creating a ZIP package
 - Find WriterClassic automatically (the path to it must be given)
-- Removing a certain version and not the entire plugin when using `remove`
-
-## Flags
-Here is a list of the flags for every command.
-
-| Command Group | Short Form Flag | Long Form Flag | Optional? |
---------|------|-----------|----|
-| `new` | `-t` | `--title` | No |
-| `new` | `-a` | `--author` | Yes |
-| `new` | `-d` | `--description` | Yes |
-| `new` | `-i` | `--icon` | Yes |
-| `new` | `-v` | `--version` | Yes |
-| `new` | None | `--package` | Yes |
-| `new` | None | `--authorfile` | Yes |
-| `new` | None | `--readme` | Yes |
-| `new` | None | `--versioning` | Yes |
-| `new` | None | `--author` | Yes |
-| `test` | `-p` | `--path` | No |
-| `test` | `-v` | `--version` | Yes |
-| `remove` | None | `--skip` | Yes |
-| `bump` | `-c` | `--changes` | Yes |
-| `bump` | `-v` | `--version` | Yes |
-| `verify` | `-f` | `--file` | No |
-| `verify` | None | `--ignore-hints` | Yes |
-| None | `-h` | `--help` | Yes |
-| None | `-w` | `--info` | Yes |
+- Updating the MANIFEST when removing a version with `remove`
 
 ## Things you shouldn't do
 - Create a plugin on a dir that already has one
-- Bump to previous versions
-- Rebump versions
 - Use `remove` on dirs that don't have plugins (it actually erases non-plugin files so **be careful!!!!**)
 - Verify files that are not WriterClassic Plugin MANIFESTs (it doesn't do anything to the file but it's gonna show a lot of errors probably)
 
+## How to build your own binaries
+**Command:** `dotnet publish -c Release -r {your-runtime-id} -f {your-framework-of-choice} WPlugZ.csproj`
+
+**Your Runtime ID:** Can be `linux-x64` or `win-x64`
+
+**Your framework of choice:** Can be `net6.0`, `net7.0` or `net8.0`
+
+### Custom options
+You can add compilation options, using the `-p` flag.
+
+**Command:** `dotnet publish -c Release -r {your-runtime-id} -f {your-framework-of-choice} -p:{option1}={value1};{option2}={value2} WPlugZ.csproj`
+
+**Available options:** `BuildDocs` (`true` = Build WPlugZ internal documentation, *anything else = Don't build docs = Default value); `OptimizeExecutable` (`true` = Generate an optimized executable = Default Value - valid only if in `Release` mode, *anything else = Don't generate optimized executables)
+
+**Creating an unoptimized executable (it's optimized by default):** `dotnet publish -c Release -r {your-runtime-id} -f {your-framework-of-choice} -p:OptimizeExecutable=false WPlugZ.csproj`
+**Creating an unoptimized executable with internal documentation (the latter is disabled by default):** `dotnet publish -c Release -r {your-runtime-id} -f {your-framework-of-choice} -p:OptimizeExecutable=false;BuildDocs=true WPlugZ.csproj`
+
 ## About WPlugZ Manifest Verify's errors and warnings
+Below you can find information an all of the WPlugZ Manifest Verify's errors et al.
+
+They haven't ben changed much since `v3.0.0` but some are slightly stricter.
+
 ### E1: TypeError
 A certain type (e.g.: string) was expected for a parameter but another type (e.g.: bool) was given instead.
 
 ### E2: InvalidVersionTag
-The version tag doesn’t match at least one of the following criteria:
-•    Starts with lowercase ‘v’
-•    Has at least 2 characters and less than 5, in total
-•    There are only digits after the first character
+The version tag doesn’t match the Regex pattern `^v(1000|[1-9][0-9]{0,2})$`.
 
 ### E3: ForbiddenName
 A forbidden character such as “*” or “?” was used in the name parameter.
