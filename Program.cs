@@ -16,9 +16,6 @@ namespace WPlugZ_CLI
     class Program
     {
 
-        /// <summary>True if the current WPlugZ-CLI version is a pre-release or a "dev version"</summary>
-        static bool isDevVersion = false;
-
         /// <summary>The current WPlugZ-CLI version</summary>
         static readonly string VERSION = "v3.1.0";
         static string latestVersion = null;
@@ -77,13 +74,6 @@ namespace WPlugZ_CLI
         {
 
             if (latestVersion == null) return false;
-
-            if (latestVersion.EndsWith("-dev"))
-            {
-
-                isDevVersion = true;
-            
-            };
 
             return latestVersion == VERSION;
 
@@ -297,6 +287,7 @@ namespace WPlugZ_CLI
                     pluginCreator.CreateAdditionalFiles();
 
                     Logger.SuccessLine("✔ Done!");
+					Colors.ResetAllEffects();
 
                 },
                 pluginNameMkArg, pluginAuthorMkOpt, pluginDescriptionMkOpt, pluginIconMkOpt, workingDirectoryOpt, pluginVersionMkOpt, doFullCreationOpt);
@@ -396,6 +387,7 @@ namespace WPlugZ_CLI
                         }
 
                         Logger.SuccessLine("✔ Removal finished!\n");
+						Colors.ResetAllEffects();
                     }
 
                 },
@@ -523,7 +515,7 @@ namespace WPlugZ_CLI
 
                     Logger.SuccessLine("✔ Updated the MANIFEST!");
                     Logger.SuccessLine("✔ Done!", 0);
-
+					Colors.ResetAllEffects();
 
                 },
                 pluginNameBmpArg, pluginVersionBmpOpt, pluginAuthorBmpOpt, pluginDescriptionBmpOpt, pluginIconBmpOpt);
@@ -644,6 +636,7 @@ namespace WPlugZ_CLI
                     }
 
                     Logger.SuccessLine("✔ Successfully created the zip package!");
+					Colors.ResetAllEffects();
 
                 },
                 pluginNamePkArg, pluginVersionPkArg, saveLocation, useUniversalFormatOpt, compressionLevelOpt);
@@ -723,6 +716,7 @@ namespace WPlugZ_CLI
                 }
                 
                 Logger.SuccessLine("✔ Done.");
+				Colors.ResetAllEffects();
 
             }, pluginNameTestArg, pluginVersionTestArg, writerClassicPath, forceOverwriteOpt);
 
@@ -749,12 +743,12 @@ namespace WPlugZ_CLI
             {
 
                 ManifestHelper manifestHelper = new(manifestFile, ignoreHints, PLACEHOLDERS);
-
-                int retCode = manifestHelper.AnalyseFile();
-
-                Logger.InfoLine("➦ Initiating 'verify' operation...");
-                Logger.InfoLine(":: INITIATING BASIC FILE ANALYSIS ::");
-
+				
+				Logger.InfoLine("➦ Initiating 'verify' operation...\n");
+                Logger.InfoLine(":: Basic File Analysis ::");
+				
+				int retCode = manifestHelper.AnalyseFile();
+				
                 switch (retCode)
                 {
 
@@ -767,13 +761,11 @@ namespace WPlugZ_CLI
 
                 Colors.ResetAllEffects();
                 Console.Write("\n");
-                Logger.InfoLine(":: INITIATING IN-DEPTH ANALYSIS ::");
                 manifestHelper.InitiateAnalysis();
-                Console.Write("\n");
 
-                Logger.SuccessLine(":: SUMMARY ::");
+                Logger.SuccessLine(":: Summary ::");
                 Logger.WarningLine($"Problems: {Colors.RESET}{manifestHelper.Problems}", 2);
-                Logger.InfoLine($"Hints and Reminders: {Colors.RESET}{manifestHelper.Hints}", 0);
+                Logger.InfoLine(manifestHelper.IgnoreHints ? $"Reminders: {Colors.RESET}{manifestHelper.Reminders}" : $"Hints and Reminders: {Colors.RESET}{manifestHelper.Hints + manifestHelper.Reminders}", 0);
                 Logger.WarningLine($"Supressing hints: {Colors.RESET}{(manifestHelper.IgnoreHints ? "yes" : "no")}", 0);
 
                 Colors.ResetAllEffects();
@@ -796,16 +788,20 @@ namespace WPlugZ_CLI
                     if (!disableUpdateCheck)
                     {
                         CompareVersions();
+						Colors.ResetAllEffects();
                     }
 
                     if (accessPluginDocs)
                     {
                         WebBrowser.OpenURL(PLUGIN_API_URL);
                         ExitAfter.ColorReset(0);
+						Colors.ResetAllEffects();
                     }
 
                 },
                 disableUpdateCheckOption, accessPluginDocsOption);
+
+			Colors.ResetAllEffects();
 
             await rootCommand.InvokeAsync(args);
 

@@ -9,10 +9,11 @@ namespace WPlugZ_CLI.Source
         public static void Info(string data, int tonality = 1)
         {
 
-            if (tonality == 0) tonality = 69; // [i] lightest
-            else if (tonality == 2) tonality = 19; // [i] darkest
-            else tonality = 27;
-            Console.Write(Colors.Use256ColorCode(tonality));
+			string color;
+            if (tonality == 0) color = Colors.CYAN; // [i] lightest
+            else if (tonality == 2) color = Colors.Use256ColorCode(19); // [i] darkest
+            else color = Colors.BLUE;
+            Console.Write(color);
             Console.Write(data);
 
         }
@@ -20,10 +21,11 @@ namespace WPlugZ_CLI.Source
         public static void Warning(string data, int tonality = 1)
         {
 
-            if (tonality == 0) tonality = 191; // [i] lightest
-            else if (tonality == 2) tonality = 172; // [i] darkest
-            else tonality = 184;
-            Console.Write(Colors.Use256ColorCode(tonality));
+			string color;
+            if (tonality == 0) color = Colors.BRIGHT_YELLOW; // [i] lightest
+            else if (tonality == 2) color = Colors.Use256ColorCode(172); // [i] darkest
+            else color = Colors.YELLOW;
+            Console.Write(color);
             Console.Write(data);
 
         }
@@ -31,10 +33,11 @@ namespace WPlugZ_CLI.Source
         public static void Error(string data, int tonality = 1)
         {
 
-            if (tonality == 0) tonality = 202; // [i] lightest
-            else if (tonality == 2) tonality = 88; // [i] darkest
-            else tonality = 196;
-            Console.Write(Colors.Use256ColorCode(tonality));
+			string color;
+            if (tonality == 0) color = Colors.BRIGHT_RED; // [i] lightest
+            else if (tonality == 2) color = Colors.BRIGHT_MAGENTA; // [i] darkest
+            else color = Colors.RED;
+            Console.Write(color);
             Console.Write(data);
 
         }
@@ -42,10 +45,11 @@ namespace WPlugZ_CLI.Source
         public static void Success(string data, int tonality = 1)
         {
 
-            if (tonality == 0) tonality = 118; // [i] lightest
-            else if (tonality == 2) tonality = 70; // [i] darkest
-            else tonality = 82;
-            Console.Write(Colors.Use256ColorCode(tonality));
+			string color;
+            if (tonality == 0) color = Colors.BRIGHT_GREEN; // [i] lightest
+            else if (tonality == 2) color = Colors.Use256ColorCode(70); // [i] darkest
+            else color = Colors.GREEN;
+            Console.Write(color);
             Console.Write(data);
 
         }
@@ -69,44 +73,32 @@ namespace WPlugZ_CLI.Source
         public static void InfoLine(string data, int tonality = 1)
         {
 
-            if (tonality == 0) tonality = 69; // [i] lightest
-            else if (tonality == 2) tonality = 19; // [i] darkest
-            else tonality = 27;
-            Console.Write(Colors.Use256ColorCode(tonality));
-            Console.WriteLine(data);
+            Info(data, tonality);
+			Console.Write("\n");
 
         }
 
         public static void WarningLine(string data, int tonality = 1)
         {
 
-            if (tonality == 0) tonality = 191; // [i] lightest
-            else if (tonality == 2) tonality = 172; // [i] darkest
-            else tonality = 184;
-            Console.Write(Colors.Use256ColorCode(tonality));
-            Console.WriteLine(data);
+            Warning(data, tonality);
+			Console.Write("\n");
 
         }
 
         public static void ErrorLine(string data, int tonality = 1)
         {
 
-            if (tonality == 0) tonality = 202; // [i] lightest
-            else if (tonality == 2) tonality = 88; // [i] darkest
-            else tonality = 196;
-            Console.Write(Colors.Use256ColorCode(tonality));
-            Console.WriteLine(data);
+            Error(data, tonality);
+			Console.Write("\n");
 
         }
 
         public static void SuccessLine(string data, int tonality = 1)
         {
 
-            if (tonality == 0) tonality = 118; // [i] lightest
-            else if (tonality == 2) tonality = 70; // [i] darkest
-            else tonality = 82;
-            Console.Write(Colors.Use256ColorCode(tonality));
-            Console.WriteLine(data);
+            Success(data, tonality);
+			Console.Write("\n");
 
         }
 

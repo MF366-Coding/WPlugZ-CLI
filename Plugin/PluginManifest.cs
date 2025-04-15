@@ -106,6 +106,7 @@ namespace WPlugZ_CLI.Plugin
         string[] placeholders;
         int hints = 0;
         int problems = 0;
+		int reminders = 0;
         bool ignoreHints;
         JSON manifestJson;
 
@@ -173,7 +174,7 @@ namespace WPlugZ_CLI.Plugin
 
         void AnalyseVersion(JSON versionJson, string versionTag)
         {
-
+			
             foreach (var pair in versionJson.GetKeyValuePairs())
             {
 
@@ -226,7 +227,7 @@ namespace WPlugZ_CLI.Plugin
                         if (pluginName != null)
                         {
 
-                            foreach (char forbiddenChar in Path.GetInvalidPathChars())
+                            foreach (char forbiddenChar in Path.GetInvalidPathChars().Concat(Path.GetInvalidFileNameChars()).ToArray())
                             {
                                 if (pluginName.Contains(forbiddenChar))
                                 {
@@ -279,7 +280,7 @@ namespace WPlugZ_CLI.Plugin
                         {
                             if (placeholders.Contains(imagePyFile))
                             {
-                                hints++;
+                                reminders++;
                                 MPlaceholderReminder.PrintMessage($"Use of placeholder text; don't forget to use a correct URL to the file later on - {versionTag}:{pair.Key}");
                             }
                         }
@@ -296,10 +297,10 @@ namespace WPlugZ_CLI.Plugin
                         var zipFile = pair.Value as string;
                         if (zipFile != null)
                         {
-                            if (placeholders.Contains(zipFile)) {hints++; MPlaceholderReminder.PrintMessage($"Use of placeholder text; don't forget to use a correct URL to the file later on - {versionTag}:{pair.Key}"); }
+                            if (placeholders.Contains(zipFile)) {reminders++; MPlaceholderReminder.PrintMessage($"Use of placeholder text; don't forget to use a correct URL to the file later on - {versionTag}:{pair.Key}"); }
                             
-                            if (versionJson.GetLengthSafely() == 2 & versionJson.Contains("uncompatible")) {}
-                            else if (versionJson.GetLengthSafely() > 1) { problems++; MRedundantParameter.PrintMessage($"Any parameters other than 'uncompatible' are ignored when 'zipfile' is in use - {versionTag}:{pair.Key}"); }
+                            if (versionJson.Length == 2 & versionJson.Contains("uncompatible")) {}
+                            else if (versionJson.Length > 1) { problems++; MRedundantParameter.PrintMessage($"Any parameters other than 'uncompatible' are ignored when 'zipfile' is in use - {versionTag}:{pair.Key}"); }
                         }
 
                         else
@@ -316,12 +317,15 @@ namespace WPlugZ_CLI.Plugin
                         break;
                     
                     default:
-                        MNotNeeded.PrintMessage($"{pair.Key} is not sued by WriterClassic and can be safely removed - {versionTag}:{pair.Key}");
+						hints++;
+                        MNotNeeded.PrintMessage($"{pair.Key} is not used by WriterClassic and can be safely removed - {versionTag}:{pair.Key}");
                         break;
 
                 }
 
             }
+			
+			Logger.InfoLine($":: Finished analysing {versionTag} ::\n");
 
         }
 
@@ -330,6 +334,8 @@ namespace WPlugZ_CLI.Plugin
 
             foreach (var pair in manifestJson.GetKeyValuePairs())
             {
+				
+				Logger.InfoLine($":: {pair.Key} ::");
 
                 if (!IsValidVersionName(pair.Key))
                 {
@@ -339,6 +345,14 @@ namespace WPlugZ_CLI.Plugin
 
                 if (pair.Value is JSON json)
                 {
+					if (json.Length < 1)
+					{
+						problems++;
+						MExpectedSomething.PrintMessage($"Empty version object");
+						Logger.InfoLine($":: Finished analysing {pair.Key} ::\n");
+						continue;
+					}
+					
                     if (json.Contains("zipfile"))
                     {
                         hints++;
@@ -388,7 +402,12 @@ namespace WPlugZ_CLI.Plugin
 
         public int Hints
         {
-            get { return hints; }
+            get { return hints * Convert.ToInt16(!ignoreHints); }
+        }
+		
+		public int Reminders
+        {
+            get { return reminders; }
         }
 
         public bool IgnoreHints
