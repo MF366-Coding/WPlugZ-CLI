@@ -1,14 +1,7 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.CommandLine.Help;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using Microsoft.VisualBasic;
 using WPlugZ_CLI.Source;
 
 

@@ -7,7 +7,6 @@ using System.IO.Compression;
 using System.CommandLine;
 using WPlugZ_CLI.Source;
 using WPlugZ_CLI.Plugin;
-using System.Security.Authentication.ExtendedProtection;
 
 
 namespace WPlugZ_CLI
